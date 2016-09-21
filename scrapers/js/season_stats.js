@@ -43,7 +43,7 @@ page.onError = function (msg, trace) {
     });
 };
 
-page.open(url, function(status) {
+function processPage() {
   var stats = page.evaluate(function() {
 
     var extractColumnName = function(className) {
@@ -55,6 +55,11 @@ page.open(url, function(status) {
       return colname;
     };
 
+    var extract_url = function(row) {
+      var cell = row.children[1]
+      return cell.getElementsByTagName("a")[0].href;
+    }
+
     var data = [];
     //console.log("page.evaluate()...");
     var rows = document.getElementsByClassName("stats_table")[0].getElementsByTagName("tr");
@@ -62,6 +67,10 @@ page.open(url, function(status) {
     // header row
     var colNames = [];
     var displayNames = {};
+
+    // Add column for player url
+    displayNames['player-url'] = "Player URL";
+    colNames.push('player-url');
 
     // Store column, display names
     for (var i=0; i<rows[0].children.length; i++) {
@@ -83,6 +92,7 @@ page.open(url, function(status) {
         //        console.log(cell.className + ": " + cell.textContent)
         rowData[extractColumnName(cell.className)] = cell.textContent
       }
+      rowData['player-url'] = extract_url(row)
       data.push(rowData);
     }
 
@@ -93,4 +103,43 @@ page.open(url, function(status) {
 
   write_csv(stats);
   phantom.exit();
+}
+
+function waitFor(testFx, onReady, timeOutMillis) {
+    var maxtimeOutMillis = timeOutMillis ? timeOutMillis : 5000, //< Default Max Timout is 3s
+        start = new Date().getTime(),
+        condition = false,
+        interval = setInterval(function() {
+            if ( (new Date().getTime() - start < maxtimeOutMillis) && !condition ) {
+                // If not time-out yet and condition not yet fulfilled
+                condition = (typeof(testFx) === "string" ? eval(testFx) : testFx()); //< defensive code
+            } else {
+                if(!condition) {
+                    // If condition still not fulfilled (timeout but condition is 'false')
+                    //console.log("'waitFor()' timeout");
+                    phantom.exit(1);
+                } else {
+                    // Condition fulfilled (timeout and/or condition is 'true')
+                    //console.log("'waitFor()' finished in " + (new Date().getTime() - start) + "ms.");
+                    typeof(onReady) === "string" ? eval(onReady) : onReady(); //< Do what it's supposed to do once the condition is fulfilled
+                    clearInterval(interval); //< Stop this interval
+                }
+            }
+        }, 250); //< repeat check every 250ms
+};
+
+page.open(url, function(status) {
+    if (status !== "success") {
+        console.log("Unable to access network");
+        phantom.exit();
+    } else {
+        waitFor(function() {
+            // Check in the page if a specific element is now visible
+            return page.evaluate(function() {
+                return $(".stats_table").is(":visible");
+            });
+        }, function() {
+             processPage()
+        });
+    }
 });
