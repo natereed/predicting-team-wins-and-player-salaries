@@ -1,6 +1,7 @@
 import os
 import re
 
+# This script requires Python3 or else it will complain about the file encoding being missing.
 def clean_contents(contents):
     contents = contents.replace('\u2593', '')
     contents = contents.replace('\xc2\xa0', '')
