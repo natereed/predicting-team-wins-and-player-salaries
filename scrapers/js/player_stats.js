@@ -40,7 +40,11 @@ function retrievePage(url) {
         console.log(stats);
         console.log("Done");
 
-
+        var headers = $("#careerAdvancedStats2 table thead tr th");
+        var rows = $("#careerAdvancedStats2 table tbody tr");
+        stats['advanced_pitching2'] = scrapeTable(headers, rows);
+        console.log(stats);
+        console.log("Done");
         return stats;
       };
 
