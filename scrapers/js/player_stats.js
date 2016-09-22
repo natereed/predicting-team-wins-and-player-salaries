@@ -128,9 +128,11 @@ function retrievePage(url) {
       console.log("Waiting...");
       waitFor(function() {
                 return page.evaluate(function() {
-                  return true;
+                  if ($("#stat_type_nav button#stats_nav_type_pitching") || $("#stat_type_nav button#stats_nav_type_batting")
+                     || $("#stat_type_nav button#stats_nav_type_fielding")) {
+                    return true;
+                  }
                 });
-                return true;
               }, function() { setTimeout(scrapePage, 2000); });
     }
   });
