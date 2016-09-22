@@ -126,8 +126,13 @@ function retrievePage(url) {
       };
 
       console.log("Waiting...");
-      setTimeout(scrapePage, 5000);
-      }
+      waitFor(function() {
+                return page.evaluate(function() {
+                  return true;
+                });
+                return true;
+              }, function() { setTimeout(scrapePage, 2000); });
+    }
   });
 
 };
