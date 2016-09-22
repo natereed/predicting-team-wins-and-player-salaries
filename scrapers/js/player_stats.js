@@ -144,13 +144,12 @@ function retrievePage(url) {
 };
 
 var system = require('system');
-//var args = system.args;
+var args = system.args;
 
-//if (args.length === 1) {
-//  console.log('No args specified. Please specify url of sortable stats.');
-//  phantom.exit();
-//}
+if (args.length === 1) {
+  console.log('No args specified. Please specify url of sortable stats.');
+  phantom.exit();
+}
 
-//var url = args[1];
-var url = "http://m.mlb.com/player/110809/tim-belcher";
+var url = args[1];
 retrievePage(url);
