@@ -1,48 +1,5 @@
 function retrievePage(url) {
 
-/**
-  function scrapePage() {
-    console.log("Scraping page...");
-    page.evaluate(function() {
-      console.log("page.evaluate()");
-      var scrapeTable = function(headers, rows) {
-        console.log("Scraping table...");
-        var stats = {};
-        var header_names = [];
-        for (var i=0; i<headers.length; i++) {
-          header_names.push($.trim(headers[i].textContent));
-        }
-
-        for (var i=0; i<rows.length; i++) {
-          var cells = rows[i].getElementsByTagName("td");
-          for (var j=0; j<cells.length; j++) {
-            stats[header_names[j]] = $.trim(cells[j].textContent);
-            console.log(header_names[j] + ": " + cells[j].textContent);
-          }
-        }
-        console.log("Got stats...");
-        return stats;
-      };
-
-      var scrapePitching = function() {
-        console.log("Scraping pitching...");
-        var headers = $("#careerStats table thead tr th");
-        var rows = $("#careerStats table tbody tr");
-        var stats['pitching'] = scrapeTable(headers, rows);
-
-        //var headers = $("#careerAdvancedStats1 table thead tr th");
-        //var rows = $("#careerAdvancedStats1 table tbody tr");
-        //stats['advanced_pitching'] = scrapeTable(headers, rows);
-        console.log(stats);
-      };
-
-      scrapePitching();
-    });
-
-    phantom.exit();
-  }
-**/
-
   function scrapePage() {
     console.log("Scraping page...");
     console.log(page);
@@ -77,11 +34,13 @@ function retrievePage(url) {
         var stats = {};
         stats['pitching'] = scrapeTable(headers, rows);
 
-        //var headers = $("#careerAdvancedStats1 table thead tr th");
-        //var rows = $("#careerAdvancedStats1 table tbody tr");
-        //stats['advanced_pitching'] = scrapeTable(headers, rows);
-        //console.log(stats);
-        //console.log("Done");
+        var headers = $("#careerAdvancedStats1 table thead tr th");
+        var rows = $("#careerAdvancedStats1 table tbody tr");
+        stats['advanced_pitching1'] = scrapeTable(headers, rows);
+        console.log(stats);
+        console.log("Done");
+
+
         return stats;
       };
 
