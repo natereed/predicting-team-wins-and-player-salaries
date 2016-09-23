@@ -1,76 +1,40 @@
 function retrievePage(url) {
 
-  function scrapePage() {
-    console.log("Scraping page...");
-    console.log(page);
+  var scrapePitching = function(page) {
+    //page.render("pitching-stats-debug.png");
+    console.log("Scraping pitching...");
+    //        console.log(page);
 
-    var stats = page.evaluate(function() {
-      // Declare helpers
-      var scrapeTable = function(headers, rows) {
-        console.log("Scraping table...");
-        var stats = [];
-        var header_names = [];
-        for (var i=0; i<headers.length; i++) {
-          header_names.push($.trim(headers[i].textContent));
-        }
+    return page.evaluate(function() {
+            var stats = [];
 
-        for (var i=0; i<rows.length; i++) {
-          var cells = rows[i].getElementsByTagName("td");
-          stat = {}
-          for (var j=0; j<cells.length; j++) {
-            stat[header_names[j]] = $.trim(cells[j].textContent);
-            console.log(header_names[j] + ": " + cells[j].textContent);
-          }
-          stats.push(stat);
-        }
-        console.log("Got stats...");
-        return stats;
-      };
+            var headers = $("#careerStats table thead tr th");
+            var rows = $("#careerStats table tbody tr");
 
-      var scrapePitching = function() {
-        //console.log("Scraping pitching...");
-        var headers = $("#careerStats table thead tr th");
-        var rows = $("#careerStats table tbody tr");
-        var stats = {};
-        stats['pitching'] = scrapeTable(headers, rows);
+            headers = headers.map(function() {return $.trim(this.textContent);}).get();
 
-        var headers = $("#careerAdvancedStats1 table thead tr th");
-        var rows = $("#careerAdvancedStats1 table tbody tr");
-        stats['advanced_pitching1'] = scrapeTable(headers, rows);
-        console.log(stats);
-        console.log("Done");
+            stats['num_rows'] = rows.length;
+            stats['headers'] = headers;
 
-        var headers = $("#careerAdvancedStats2 table thead tr th");
-        var rows = $("#careerAdvancedStats2 table tbody tr");
-        stats['advanced_pitching2'] = scrapeTable(headers, rows);
-        console.log(stats);
-        console.log("Done");
-        return stats;
-      };
-
-      // End helper declarations
-      //console.log("About to scrape, yo!");
-      var pitchingNav = $("#stats_nav_type_pitching");
-      if (pitchingNav && pitchingNav.length > 0) {
-        //console.log("Clicking Pitching nav button");
-        pitchingNav[0].click();
-      } else {
-        //console.log("Pitching NAV not found!!! Aborting...")
-        phantom.exit();
-      }
-      return scrapePitching();
-    });
-
-    console.log(JSON.stringify(stats))
-    // End of scraping
-    phantom.exit();
+            for (var i=0; i<rows.length; i++) {
+              console.log(i);
+              var cells = rows[i].getElementsByTagName("td");
+              var d = {};
+              for (var j=0; j<cells.length; j++) {
+                d[headers[j]] = $.trim(cells[j].textContent);
+              }
+              stats.push(d);
+            }
+            return stats;
+        });
   };
 
+
   console.log("Retrieving page...");
-
   var redirectURL = null;
-
   var page = require('webpage').create();
+  page.settings.loadImages = false;
+
   page.viewportSize = { width: 1024, height: 2400 };
   //the clipRect is the portion of the page you are taking a screenshot of
   page.clipRect = { top: 0, left: 0, width: 1024, height: 2400 };
@@ -89,18 +53,8 @@ function retrievePage(url) {
     }
   };
 
-  page.open(url, function(status) {
-    console.log(status);
-    if (redirectURL) {
-      console.log("Redirecting...");
-      retrievePage(redirectURL);
-    }
-    else if (status !== "success") {
-      console.log("Unable to access network");
-      phantom.exit();
-    } else {
-
-      var waitFor = function(testFx, onReady, timeOutMillis) {
+  var handleHappyPath = function(page) {
+    var waitFor = function(testFx, onReady, timeOutMillis) {
         console.log("Waiting...");
         var maxtimeOutMillis = timeOutMillis ? timeOutMillis : 6000, //< Default Max Timout is 3s
           start = new Date().getTime(),
@@ -112,7 +66,7 @@ function retrievePage(url) {
               } else {
                   if(!condition) {
                       // If condition still not fulfilled (timeout but condition is 'false')
-                      page.render("stats.png");
+                      //page.render("stats.png");
                       console.log("'waitFor()' timeout");
                       phantom.exit(1);
                   } else {
@@ -125,15 +79,58 @@ function retrievePage(url) {
           }, 250); //< repeat check every 250ms
       };
 
-      console.log("Waiting...");
-      waitFor(function() {
-                return page.evaluate(function() {
-                  if ($("#stat_type_nav button#stats_nav_type_pitching") || $("#stat_type_nav button#stats_nav_type_batting")
-                     || $("#stat_type_nav button#stats_nav_type_fielding")) {
-                    return true;
-                  }
-                });
-              }, function() { setTimeout(scrapePage, 2000); });
+    console.log("Clicking...");
+
+    // Scrape pitching
+    // Click on "Pitching" once it appears
+    waitFor(function() {
+        return page.evaluate(function() {
+                 if ($("#stat_type_nav button#stats_nav_type_pitching")) {
+                   return true;
+                 }
+               });
+              }, function() {
+                   var clicked = page.evaluate(function() {
+                     var pitchingNav = $("#stat_type_nav button#stats_nav_type_pitching");
+                     if (pitchingNav && pitchingNav.length > 0) {
+                       //console.log("Clicking Pitching nav button");
+                       pitchingNav[0].click();
+                       return true;
+                     }
+                     else {
+                       return false;
+                     }
+                   });
+                   if (!clicked) {
+                     console.log("Pitching NAV not found!!! Aborting...")
+                     phantom.exit();
+                   }
+               });
+
+    console.log("Waiting for table to load...");
+    // TBD - waitFor
+
+    var stats = scrapePitching(page);
+    console.log(JSON.stringify(stats))
+
+    // End of scraping
+    phantom.exit();
+  };
+  // End nested function declarations
+
+  // Open specified url, handle based on status
+  page.open(url, function(status) {
+    console.log(status);
+    if (redirectURL) {
+      console.log("Redirecting...");
+      retrievePage(redirectURL);
+    }
+    else if (status !== "success") {
+      console.log("Unable to access network");
+      phantom.exit();
+    }
+    else {
+      handleHappyPath(page);
     }
   });
 
