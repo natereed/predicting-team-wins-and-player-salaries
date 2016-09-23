@@ -1,32 +1,26 @@
-function retrievePage(url) {
+function retrievePage(url, statsType) {
 
-  var scrapePitching = function(page) {
-    //page.render("pitching-stats-debug.png");
-    console.log("Scraping pitching...");
-    //        console.log(page);
-
+  var scrapeCareerStats = function(page) {
     return page.evaluate(function() {
-            var stats = [];
+      var stats = [];
+      var headers = $("#careerStats table thead tr th");
+      var rows = $("#careerStats table tbody tr");
 
-            var headers = $("#careerStats table thead tr th");
-            var rows = $("#careerStats table tbody tr");
+      headers = headers.map(function() {return $.trim(this.textContent);}).get();
 
-            headers = headers.map(function() {return $.trim(this.textContent);}).get();
-
-            for (var i=0; i<rows.length; i++) {
-              console.log(i);
-              var cells = rows[i].getElementsByTagName("td");
-              var d = {};
-              for (var j=0; j<cells.length; j++) {
-                d[headers[j]] = $.trim(cells[j].textContent);
-              }
-              stats.push(d);
-            }
-            return stats;
-        });
+      for (var i=0; i<rows.length; i++) {
+        var cells = rows[i].getElementsByTagName("td");
+        var d = {};
+        for (var j=0; j<cells.length; j++) {
+          d[headers[j]] = $.trim(cells[j].textContent);
+        }
+        stats.push(d);
+      }
+      return stats;
+    });
   };
 
-  var scrapeAdvancedPitching1 = function(page) {
+  var scrapeCareerAdvancedStats1 = function(page) {
     return page.evaluate(function() {
       var stats = [];
       var headers = $("#careerAdvancedStats1 table thead tr th");
@@ -39,7 +33,6 @@ function retrievePage(url) {
       headers = headers.map(function() {return $.trim(this.textContent);}).get();
 
       for (var i=0; i<rows.length; i++) {
-        console.log(i);
         var cells = rows[i].getElementsByTagName("td");
         var d = {};
         for (var j=0; j<cells.length; j++) {
@@ -51,7 +44,7 @@ function retrievePage(url) {
     });
   };
 
-  var scrapeAdvancedPitching2 = function(page) {
+  var scrapeCareerAdvancedStats2 = function(page) {
     return page.evaluate(function() {
       var stats = [];
       var headers = $("#careerAdvancedStats2 table thead tr th");
@@ -64,7 +57,6 @@ function retrievePage(url) {
       headers = headers.map(function() {return $.trim(this.textContent);}).get();
 
       for (var i=0; i<rows.length; i++) {
-        console.log(i);
         var cells = rows[i].getElementsByTagName("td");
         var d = {};
         for (var j=0; j<cells.length; j++) {
@@ -76,7 +68,6 @@ function retrievePage(url) {
     });
   };
 
-  console.log("Retrieving page...");
   var redirectURL = null;
   var page = require('webpage').create();
   page.settings.loadImages = false;
@@ -99,26 +90,30 @@ function retrievePage(url) {
     }
   };
 
-  var handleHappyPath = function(page) {
+  // Uncomment this to be able to see console.log messages from page:
+  //page.onConsoleMessage = function(msg) {
+  //  console.log(msg);
+  //}
+
+  var handleHappyPath = function(page, statsType) {
     var waitFor = function(testFx, onReady, timeOutMillis) {
-        console.log("Waiting for...");
         var maxtimeOutMillis = timeOutMillis ? timeOutMillis : 6000, //< Default Max Timout is 3s
           start = new Date().getTime(),
           condition = false,
           interval = setInterval(function() {
               if ( (new Date().getTime() - start < maxtimeOutMillis) && !condition ) {
                   // If not time-out yet and condition not yet fulfilled
-                  console.log("condition? " + condition)
+                  //console.log("condition? " + condition)
                   condition = (typeof(testFx) === "string" ? eval(testFx) : testFx()); //< defensive code
               } else {
                   if(!condition) {
                       // If condition still not fulfilled (timeout but condition is 'false')
-                      //page.render("stats.png");
+                      page.render("stats-debug.png");
                       console.log("'waitFor()' timeout");
                       phantom.exit(1);
                   } else {
                       // Condition fulfilled (timeout and/or condition is 'true')
-                      console.log("'waitFor()' finished in " + (new Date().getTime() - start) + "ms.");
+                      //console.log("'waitFor()' finished in " + (new Date().getTime() - start) + "ms.");
                       typeof(onReady) === "string" ? eval(onReady) : onReady(); //< Do what it's supposed to do once the condition is fulfilled
                       clearInterval(interval); //< Stop this interval
                   }
@@ -126,85 +121,61 @@ function retrievePage(url) {
           }, 250); //< repeat check every 250ms
       };
 
-    console.log("Clicking...");
-
-    // Scrape pitching
-    // Click on "Pitching" once it appears
     waitFor(function() {
-        return page.evaluate(function() {
-                 if ($("#stat_type_nav button#stats_nav_type_pitching")) {
+        return page.evaluate(function(statsType) {
+                 if ($("#stat_type_nav button#stats_nav_type_" + statsType)) {
                    return true;
                  }
-               });
+               }, statsType);
               }, function() {
-                   var clicked = page.evaluate(function() {
-                     var pitchingNav = $("#stat_type_nav button#stats_nav_type_pitching");
-                     if (pitchingNav && pitchingNav.length > 0) {
-                       //console.log("Clicking Pitching nav button");
-                       pitchingNav[0].click();
+                   var clicked = page.evaluate(function(statsType) {
+                     var statsNav = $("#stat_type_nav button#stats_nav_type_" + statsType);
+                     if (statsNav && statsNav.length > 0) {
+                       statsNav[0].click();
                        return true;
                      }
                      else {
                        return false;
                      }
-                   });
+                   }, statsType);
                    if (!clicked) {
-                     console.log("Pitching NAV not found!!! Aborting...")
+                     console.log("Stats NAV not found!!! Aborting...")
                      phantom.exit();
                    }
                });
 
-    // Scrape pitching and exit
+    // Scrape career stats and exit
     waitFor(function() {
-        var condition = page.evaluate(function() {
-          console.log("Checking for title");
+        var condition = page.evaluate(function(statsType) {
           var titleStats = $(".title-stats");
           if (!titleStats || titleStats.length < 1 || !titleStats[0].textContent) {
             return false;
           }
-          console.log("Checking for table...");
           // Check the table
           rows = $("#careerStats table tbody tr")
-          return titleStats[0].textContent.search(/Pitching Stats/) != -1 && rows && rows.length > 0;
-        });
-        console.log("Ready? " + condition);
+          return titleStats[0].textContent.search(new RegExp(statsType + " stats", "i")) != -1 && rows && rows.length > 0;
+        }, statsType);
         return condition;
         }, function() {
-             console.log("onReady function");
              setTimeout(function() {
-               console.log("Found page elements - ready to scrape...");
-               var pitchingStats = scrapePitching(page);
-               var advancedPitchingStats1 = scrapeAdvancedPitching1(page);
-               var advancedPitchingStats2 = scrapeAdvancedPitching2(page);
+               var careerStats = scrapeCareerStats(page);
+               var advancedCareerStats1 = scrapeCareerAdvancedStats1(page);
+               var advancedCareerStats2 = scrapeCareerAdvancedStats2(page);
                stats = {};
-               stats['pitching'] = pitchingStats;
-               stats['advancedPitching1'] = advancedPitchingStats1;
-               stats['advancedPitching2'] = advancedPitchingStats2;
+               stats['career'] = careerStats;
+               stats['advancedCareerStats1'] = advancedCareerStats1;
+               stats['advancedCareerStats2'] = advancedCareerStats2;
                console.log(JSON.stringify(stats));
-               console.log("Done");
                phantom.exit();
              }, 1000);
            });
-
-/**
-    console.log("Waiting a few seconds...");
-    // Old approach: just scrape the page without waiting. Probably want to wait until the stats appear:
-    setTimeout(function() {
-      console.log("Executing");
-      var stats = scrapePitching(page);
-      console.log(JSON.stringify(stats))
-      phantom.exit();
-    }, 5000);
-**/
 
   };
   // End nested function declarations
 
   // Open specified url, handle based on status
   page.open(url, function(status) {
-    console.log(status);
     if (redirectURL) {
-      console.log("Redirecting...");
       retrievePage(redirectURL);
     }
     else if (status !== "success") {
@@ -212,7 +183,7 @@ function retrievePage(url) {
       phantom.exit();
     }
     else {
-      handleHappyPath(page);
+      handleHappyPath(page, statsType);
     }
   });
 
@@ -221,10 +192,11 @@ function retrievePage(url) {
 var system = require('system');
 var args = system.args;
 
-if (args.length === 1) {
-  console.log('No args specified. Please specify url of sortable stats.');
+if (args.length < 3) {
+  console.log('No args specified. Please specify url and type of sortable stats to scrape (pitching, batting, fielding).');
   phantom.exit();
 }
 
 var url = args[1];
-retrievePage(url);
+var statsType = args[2];
+retrievePage(url, statsType);
