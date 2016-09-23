@@ -13,9 +13,6 @@ function retrievePage(url) {
 
             headers = headers.map(function() {return $.trim(this.textContent);}).get();
 
-            stats['num_rows'] = rows.length;
-            stats['headers'] = headers;
-
             for (var i=0; i<rows.length; i++) {
               console.log(i);
               var cells = rows[i].getElementsByTagName("td");
@@ -27,6 +24,56 @@ function retrievePage(url) {
             }
             return stats;
         });
+  };
+
+  var scrapeAdvancedPitching1 = function(page) {
+    return page.evaluate(function() {
+      var stats = [];
+      var headers = $("#careerAdvancedStats1 table thead tr th");
+      var rows = $("#careerAdvancedStats1 table tbody tr");
+
+      if (!headers || !rows) {
+        return stats;
+      }
+
+      headers = headers.map(function() {return $.trim(this.textContent);}).get();
+
+      for (var i=0; i<rows.length; i++) {
+        console.log(i);
+        var cells = rows[i].getElementsByTagName("td");
+        var d = {};
+        for (var j=0; j<cells.length; j++) {
+          d[headers[j]] = $.trim(cells[j].textContent);
+        }
+        stats.push(d);
+      }
+      return stats;
+    });
+  };
+
+  var scrapeAdvancedPitching2 = function(page) {
+    return page.evaluate(function() {
+      var stats = [];
+      var headers = $("#careerAdvancedStats2 table thead tr th");
+      var rows = $("#careerAdvancedStats2 table tbody tr");
+
+      if (!headers || !rows) {
+        return stats;
+      }
+
+      headers = headers.map(function() {return $.trim(this.textContent);}).get();
+
+      for (var i=0; i<rows.length; i++) {
+        console.log(i);
+        var cells = rows[i].getElementsByTagName("td");
+        var d = {};
+        for (var j=0; j<cells.length; j++) {
+          d[headers[j]] = $.trim(cells[j].textContent);
+        }
+        stats.push(d);
+      }
+      return stats;
+    });
   };
 
   console.log("Retrieving page...");
@@ -107,8 +154,7 @@ function retrievePage(url) {
                    }
                });
 
-    // TBD - waitFor
-    // This part doesn't work yet:
+    // Scrape pitching and exit
     waitFor(function() {
         var condition = page.evaluate(function() {
           console.log("Checking for title");
@@ -127,8 +173,15 @@ function retrievePage(url) {
              console.log("onReady function");
              setTimeout(function() {
                console.log("Found page elements - ready to scrape...");
-               var stats = scrapePitching(page);
+               var pitchingStats = scrapePitching(page);
+               var advancedPitchingStats1 = scrapeAdvancedPitching1(page);
+               var advancedPitchingStats2 = scrapeAdvancedPitching2(page);
+               stats = {};
+               stats['pitching'] = pitchingStats;
+               stats['advancedPitching1'] = advancedPitchingStats1;
+               stats['advancedPitching2'] = advancedPitchingStats2;
                console.log(JSON.stringify(stats));
+               console.log("Done");
                phantom.exit();
              }, 1000);
            });
@@ -143,7 +196,6 @@ function retrievePage(url) {
       phantom.exit();
     }, 5000);
 **/
-    console.log("Done");
 
   };
   // End nested function declarations
