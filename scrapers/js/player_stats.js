@@ -29,7 +29,6 @@ function retrievePage(url) {
         });
   };
 
-
   console.log("Retrieving page...");
   var redirectURL = null;
   var page = require('webpage').create();
@@ -55,13 +54,14 @@ function retrievePage(url) {
 
   var handleHappyPath = function(page) {
     var waitFor = function(testFx, onReady, timeOutMillis) {
-        console.log("Waiting...");
+        console.log("Waiting for...");
         var maxtimeOutMillis = timeOutMillis ? timeOutMillis : 6000, //< Default Max Timout is 3s
           start = new Date().getTime(),
           condition = false,
           interval = setInterval(function() {
               if ( (new Date().getTime() - start < maxtimeOutMillis) && !condition ) {
                   // If not time-out yet and condition not yet fulfilled
+                  console.log("condition? " + condition)
                   condition = (typeof(testFx) === "string" ? eval(testFx) : testFx()); //< defensive code
               } else {
                   if(!condition) {
@@ -107,14 +107,44 @@ function retrievePage(url) {
                    }
                });
 
-    console.log("Waiting for table to load...");
     // TBD - waitFor
+    // This part doesn't work yet:
+    waitFor(function() {
+        var condition = page.evaluate(function() {
+          console.log("Checking for title");
+          var titleStats = $(".title-stats");
+          if (!titleStats || titleStats.length < 1 || !titleStats[0].textContent) {
+            return false;
+          }
+          console.log("Checking for table...");
+          // Check the table
+          rows = $("#careerStats table tbody tr")
+          return titleStats[0].textContent.search(/Pitching Stats/) != -1 && rows && rows.length > 0;
+        });
+        console.log("Ready? " + condition);
+        return condition;
+        }, function() {
+             console.log("onReady function");
+             setTimeout(function() {
+               console.log("Found page elements - ready to scrape...");
+               var stats = scrapePitching(page);
+               console.log(JSON.stringify(stats));
+               phantom.exit();
+             }, 1000);
+           });
 
-    var stats = scrapePitching(page);
-    console.log(JSON.stringify(stats))
+/**
+    console.log("Waiting a few seconds...");
+    // Old approach: just scrape the page without waiting. Probably want to wait until the stats appear:
+    setTimeout(function() {
+      console.log("Executing");
+      var stats = scrapePitching(page);
+      console.log(JSON.stringify(stats))
+      phantom.exit();
+    }, 5000);
+**/
+    console.log("Done");
 
-    // End of scraping
-    phantom.exit();
   };
   // End nested function declarations
 
