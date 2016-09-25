@@ -91,11 +91,14 @@ function retrievePage(url, statsType) {
   };
 
   // Uncomment this to be able to see console.log messages from page:
-  //page.onConsoleMessage = function(msg) {
-  //  console.log(msg);
-  //}
+  page.onConsoleMessage = function(msg) {
+    console.log(msg);
+  }
 
   var handleHappyPath = function(page, statsType) {
+    console.log("handleHappyPath");
+    console.log("stats type : " + statsType);
+
     var waitFor = function(testFx, onReady, timeOutMillis) {
         var maxtimeOutMillis = timeOutMillis ? timeOutMillis : 6000, //< Default Max Timout is 3s
           start = new Date().getTime(),
@@ -123,25 +126,20 @@ function retrievePage(url, statsType) {
 
     waitFor(function() {
         return page.evaluate(function(statsType) {
-                 if ($("#stat_type_nav button#stats_nav_type_" + statsType)) {
+                 var statsNav = $("#stat_type_nav button#stats_nav_type_" + statsType);
+                 var mlbButton = $("button#level_mlb");
+
+                 if (statsNav && statsNav.length > 0 && mlbButton && mlbButton.length > 0) {
                    return true;
                  }
                }, statsType);
               }, function() {
-                   var clicked = page.evaluate(function(statsType) {
+                   page.evaluate(function(statsType) {
                      var statsNav = $("#stat_type_nav button#stats_nav_type_" + statsType);
-                     if (statsNav && statsNav.length > 0) {
-                       statsNav[0].click();
-                       return true;
-                     }
-                     else {
-                       return false;
-                     }
+                     statsNav[0].click();
+                     var mlbButton = $("button#level_mlb")[0];
+                     mlbButton.click();
                    }, statsType);
-                   if (!clicked) {
-                     console.log("Stats NAV not found!!! Aborting...")
-                     phantom.exit();
-                   }
                });
 
     // Scrape career stats and exit
@@ -151,6 +149,7 @@ function retrievePage(url, statsType) {
           if (!titleStats || titleStats.length < 1 || !titleStats[0].textContent) {
             return false;
           }
+
           // Check the table
           rows = $("#careerStats table tbody tr")
           return titleStats[0].textContent.search(new RegExp(statsType + " stats", "i")) != -1 && rows && rows.length > 0;
@@ -176,13 +175,14 @@ function retrievePage(url, statsType) {
   // Open specified url, handle based on status
   page.open(url, function(status) {
     if (redirectURL) {
-      retrievePage(redirectURL);
+      retrievePage(redirectURL, statsType);
     }
     else if (status !== "success") {
       console.log("Unable to access network");
       phantom.exit();
     }
     else {
+      console.log("statsType: " + statsType);
       handleHappyPath(page, statsType);
     }
   });
@@ -199,4 +199,6 @@ if (args.length < 3) {
 
 var url = args[1];
 var statsType = args[2];
+console.log("url : " + url);
+console.log("statsType: " + statsType);
 retrievePage(url, statsType);
