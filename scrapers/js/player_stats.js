@@ -157,13 +157,20 @@ function retrievePage(url, statsType) {
         return condition;
         }, function() {
              setTimeout(function() {
-               var careerStats = scrapeCareerStats(page);
-               var advancedCareerStats1 = scrapeCareerAdvancedStats1(page);
-               var advancedCareerStats2 = scrapeCareerAdvancedStats2(page);
                stats = {};
+               var careerStats = scrapeCareerStats(page);
                stats['career'] = careerStats;
-               stats['advancedCareerStats1'] = advancedCareerStats1;
-               stats['advancedCareerStats2'] = advancedCareerStats2;
+
+               if (statsType == 'pitching' || statsType == 'batting') {
+                 var advancedCareerStats1 = scrapeCareerAdvancedStats1(page);
+                 stats['advancedCareerStats1'] = advancedCareerStats1;
+               }
+
+               if (statsType == 'pitching') {
+                 var advancedCareerStats2 = scrapeCareerAdvancedStats2(page);
+                 stats['advancedCareerStats2'] = advancedCareerStats2;
+               }
+
                console.log(JSON.stringify(stats));
                phantom.exit();
              }, 1000);
