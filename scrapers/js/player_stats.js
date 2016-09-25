@@ -145,6 +145,9 @@ function retrievePage(url, statsType) {
     // Scrape career stats and exit
     waitFor(function() {
         var condition = page.evaluate(function(statsType) {
+          if ($(".status-message").css('display') != "none") {
+              return false;
+          }
           var titleStats = $(".title-stats");
           if (!titleStats || titleStats.length < 1 || !titleStats[0].textContent) {
             return false;
