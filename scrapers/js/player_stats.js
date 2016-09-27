@@ -1,9 +1,17 @@
+var debug = false;
+
+var logDebugMsg = function(msg) {
+  if (debug) {
+    console.log(msg);
+  }
+}
+
 function retrievePage(url, statsType) {
 
   var scrapeCareerStats = function(page) {
     return page.evaluate(function() {
       var stats = [];
-      var headers = $("#careerStats table thead tr th");
+      var headers = $("#careerStats .responsive-datatable__pinned table thead tr th");
       var rows = $("#careerStats table tbody tr");
 
       headers = headers.map(function() {return $.trim(this.textContent);}).get();
@@ -23,8 +31,8 @@ function retrievePage(url, statsType) {
   var scrapeCareerAdvancedStats1 = function(page) {
     return page.evaluate(function() {
       var stats = [];
-      var headers = $("#careerAdvancedStats1 table thead tr th");
-      var rows = $("#careerAdvancedStats1 table tbody tr");
+      var headers = $("#careerAdvancedStats1 .responsive-datatable__pinned table thead tr th");
+      var rows = $("#careerAdvancedStats1 .responsive-datatable__pinned table tbody tr");
 
       if (!headers || !rows) {
         return stats;
@@ -47,8 +55,8 @@ function retrievePage(url, statsType) {
   var scrapeCareerAdvancedStats2 = function(page) {
     return page.evaluate(function() {
       var stats = [];
-      var headers = $("#careerAdvancedStats2 table thead tr th");
-      var rows = $("#careerAdvancedStats2 table tbody tr");
+      var headers = $("#careerAdvancedStats2 .responsive-datatable__pinned table thead tr th");
+      var rows = $("#careerAdvancedStats2 .responsive-datatable__pinned table tbody tr");
 
       if (!headers || !rows) {
         return stats;
@@ -85,19 +93,21 @@ function retrievePage(url, statsType) {
 
   page.onResourceReceived = function(resource) {
     if (url == resource.url && resource.redirectURL) {
-      console.log("Redirect detected...");
       redirectURL = resource.redirectURL;
+      logDebugMsg("Redirecting to " + redirectURL);
     }
   };
 
   // Uncomment this to be able to see console.log messages from page:
-  page.onConsoleMessage = function(msg) {
-    console.log(msg);
+  if (debug) {
+    page.onConsoleMessage = function(msg) {
+      console.log(msg);
+    }
   }
 
   var handleHappyPath = function(page, statsType) {
-    console.log("handleHappyPath");
-    console.log("stats type : " + statsType);
+    logDebugMsg("handleHappyPath");
+    logDebugMsg("stats type : " + statsType);
 
     var waitFor = function(testFx, onReady, timeOutMillis) {
         var maxtimeOutMillis = timeOutMillis ? timeOutMillis : 6000, //< Default Max Timout is 3s
@@ -106,17 +116,17 @@ function retrievePage(url, statsType) {
           interval = setInterval(function() {
               if ( (new Date().getTime() - start < maxtimeOutMillis) && !condition ) {
                   // If not time-out yet and condition not yet fulfilled
-                  //console.log("condition? " + condition)
+                  //logDebugMsg("condition? " + condition)
                   condition = (typeof(testFx) === "string" ? eval(testFx) : testFx()); //< defensive code
               } else {
                   if(!condition) {
                       // If condition still not fulfilled (timeout but condition is 'false')
                       page.render("stats-debug.png");
-                      console.log("'waitFor()' timeout");
+                      logDebugMsg("'waitFor()' timeout");
                       phantom.exit(1);
                   } else {
                       // Condition fulfilled (timeout and/or condition is 'true')
-                      //console.log("'waitFor()' finished in " + (new Date().getTime() - start) + "ms.");
+                      //logDebugMsg("'waitFor()' finished in " + (new Date().getTime() - start) + "ms.");
                       typeof(onReady) === "string" ? eval(onReady) : onReady(); //< Do what it's supposed to do once the condition is fulfilled
                       clearInterval(interval); //< Stop this interval
                   }
@@ -143,6 +153,8 @@ function retrievePage(url, statsType) {
                });
 
     // Scrape career stats and exit
+
+    // Wait for title with text statsType and the table with career stats to be visible and have data loaded
     waitFor(function() {
         var condition = page.evaluate(function(statsType) {
           if ($(".status-message").css('display') != "none") {
@@ -154,7 +166,7 @@ function retrievePage(url, statsType) {
           }
 
           // Check the table
-          rows = $("#careerStats table tbody tr")
+          rows = $("#careerStats .responsive-datatable__pinned table tbody tr")
           return titleStats[0].textContent.search(new RegExp(statsType + " stats", "i")) != -1 && rows && rows.length > 0;
         }, statsType);
         return condition;
@@ -188,11 +200,11 @@ function retrievePage(url, statsType) {
       retrievePage(redirectURL, statsType);
     }
     else if (status !== "success") {
-      console.log("Unable to access network");
+      logDebugMsg("Unable to access network");
       phantom.exit();
     }
     else {
-      console.log("statsType: " + statsType);
+      logDebugMsg("statsType: " + statsType);
       handleHappyPath(page, statsType);
     }
   });
@@ -209,6 +221,6 @@ if (args.length < 3) {
 
 var url = args[1];
 var statsType = args[2];
-console.log("url : " + url);
-console.log("statsType: " + statsType);
+logDebugMsg("url : " + url);
+logDebugMsg("statsType: " + statsType);
 retrievePage(url, statsType);
