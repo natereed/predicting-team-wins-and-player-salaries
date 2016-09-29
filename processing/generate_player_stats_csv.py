@@ -55,6 +55,7 @@ def generate_stats_csv(player_id, stats_type):
         data = json.load(open(path, "r"))
     except:
         print("No data found for {}, {}".format(player_id, stats_type))
+        return
 
     player = lookup_player(player_id)
 
@@ -91,7 +92,7 @@ def generate_stats_csv(player_id, stats_type):
 
 stats_dir = os.path.join("..", "data", "players")
 player_ids = os.listdir(stats_dir)
-for player_id in player_ids[:1]:
+for player_id in player_ids:
     player_dir = os.path.join(stats_dir, player_id)
 
     print("Generating " + player_id)
