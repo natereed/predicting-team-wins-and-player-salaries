@@ -23,7 +23,7 @@ files = listdir(dir)
 
 season = 2015
 with open(os.path.join("..", "data", "db", "Players.csv"), "w") as out_file:
-    writer = csv.DictWriter(out_file, ['player_id', 'name', 'normalized_name'])
+    writer = csv.DictWriter(out_file, ['Player Id', 'External Player Id', 'Name'])
     writer.writeheader()
     for file in files:
         if fnmatch.fnmatch(file, "*-cleaned.{}.csv".format(season)):
@@ -33,8 +33,8 @@ with open(os.path.join("..", "data", "db", "Players.csv"), "w") as out_file:
                 for row in reader:
                     out_row = {}
                     name = row['Player']
-                    out_row['name'] = name
-                    out_row['player_id'] = extract_player_id(row['Player URL'])
-                    out_row['normalized_name'] = normalize_name(name)
+                    out_row['Name'] = name
+                    out_row['External Player Id'] = extract_player_id(row['Player URL'])
+                    out_row['Player Id'] = normalize_name(name)
                     writer.writerow(out_row)
 

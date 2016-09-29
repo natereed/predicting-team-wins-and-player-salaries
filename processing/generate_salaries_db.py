@@ -1,24 +1,25 @@
+import csv
 import os
-import pandas as pd
-import re
 
-df = pd.read_csv(os.path.join("..", "data", "salaries.csv"))
-df = df[df.year == 2015]
+from nameutils import normalize_first_and_last
 
-def get_short_name(name):
-    m = re.search(r'([\w\s]+),\s+([\w\s]{1})', name)
-    last = m.group(1)
-    first = m.group(2)
-    return first[0].lower() + last.lower()
-
-# Take a name in the form "First Last" and convert to
-# flast (first initial followed by last name,
-def normalize_name(name):
-data = []
-for row in df.itertuples():
-    name = row[2]
-
-    data.append(row)
+fieldnames = ['Player Id', 'Name', 'Total Value', 'Year', 'Position', 'Contract Years', 'Avg Annual', 'Team']
+with open(os.path.join("..", "data", "salaries.csv")) as salaries_in:
+    reader = csv.DictReader(salaries_in)
+    with open(os.path.join("..", "data", "db", "Salaries.csv"), "w") as salaries_out:
+        writer = csv.DictWriter(salaries_out, fieldnames)
+        writer.writeheader()
+        for row in reader:
+            out_row = {}
+            out_row['Player Id'] = normalize_first_and_last(row['name'])
+            out_row['Name'] = row['name']
+            out_row['Total Value'] = row['total_value']
+            out_row['Year'] = row['year']
+            out_row['Position'] = row['pos']
+            out_row['Contract Years'] = row['contract_years']
+            out_row['Avg Annual'] = row['avg_annual']
+            out_row['Team'] = row['team']
+            writer.writerow(out_row)
 
 
 

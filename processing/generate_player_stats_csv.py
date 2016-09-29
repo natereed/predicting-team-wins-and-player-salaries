@@ -24,7 +24,7 @@ def lookup_player(player_id):
     with open(os.path.join("..", "data", "db", "Players.csv")) as players_csv:
         reader = csv.DictReader(players_csv)
         for row in reader:
-            if (row['player_id'] == player_id):
+            if (row['External Player Id'] == player_id):
                 return row
     return None
 
