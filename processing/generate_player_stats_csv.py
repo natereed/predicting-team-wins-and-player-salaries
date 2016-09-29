@@ -11,11 +11,11 @@ FIELDNAMES = {
     'fielding' : ['Player Id', 'Year', 'Team', 'LG', 'POS', 'G', 'GS', 'INN', 'TC', 'PO', 'A', 'E', 'DP', 'PB', 'SB', 'CS', 'RF', 'FPCT']
 }
 
-players = {}
-with open(os.path.join("..", "data", "db", "Players.csv"), "r") as in_file:
-    reader = csv.DictReader(in_file)
-    for row in reader:
-        players[row['player_id']] = row
+#players = {}
+#with open(os.path.join("..", "data", "db", "Players.csv"), "r") as in_file:
+#    reader = csv.DictReader(in_file)
+#    for row in reader:
+#        players[row['Player Id']] = row
 
 # Write out the player id and standardized player short name along with the performance stats
 # as a CSV file.
@@ -38,7 +38,7 @@ def generate_batting_career_stats_csv(player_dir, player_id, career_data):
         writer = csv.DictWriter(out_file, fieldnames)
         writer.writeheader()
         for row in career_data:
-            row['Player Id'] = player['normalized_name']
+            row['Player Id'] = player['Player Id']
             writer.writerow(row)
 
 def lookup_fieldnames(stats_type, advanced=None):
@@ -63,7 +63,7 @@ def generate_stats_csv(player_id, stats_type):
         writer = csv.DictWriter(out_file, lookup_fieldnames(stats_type))
         writer.writeheader()
         for row in data['career']:
-            row['Player Id'] = player['normalized_name']
+            row['Player Id'] = player['Player Id']
             writer.writerow(row)
 
     if (stats_type == 'fielding'):
@@ -75,7 +75,7 @@ def generate_stats_csv(player_id, stats_type):
         print(lookup_fieldnames(stats_type, advanced=1))
         writer.writeheader()
         for row in data['advancedCareerStats1']:
-            row['Player Id'] = player['normalized_name']
+            row['Player Id'] = player['Player Id']
             writer.writerow(row)
 
     if (stats_type == 'batting'):
@@ -86,7 +86,7 @@ def generate_stats_csv(player_id, stats_type):
         writer = csv.DictWriter(out_file, lookup_fieldnames(stats_type, advanced=2))
         writer.writeheader()
         for row in data['advancedCareerStats2']:
-            row['Player Id'] = player['normalized_name']
+            row['Player Id'] = player['Player Id']
             writer.writerow(row)
 
 stats_dir = os.path.join("..", "data", "players")
