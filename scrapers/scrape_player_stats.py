@@ -1,8 +1,6 @@
 # Load player urls from data/cleaned
 # Use distinct player url's
 
-import csv
-import fnmatch
 import os
 from os import listdir
 import re
@@ -41,7 +39,7 @@ if not os.path.exists(players_output_dir):
     os.makedirs(players_output_dir)
 
 stats_types = ['pitching', 'batting', 'fielding']
-for url in player_urls[:50]:
+for url in player_urls:
     for stats_type in stats_types:
         scrape_player_stats(url, stats_type)
 
