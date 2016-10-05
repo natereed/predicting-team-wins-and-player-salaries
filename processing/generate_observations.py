@@ -1,6 +1,9 @@
 import pandas as pd
 import os
 
+# TODO:
+# Re-order generated columns. Sort by year and statistic.
+
 salaries_df = pd.read_csv(os.path.join("..", "data", "db", "Salaries.csv"))
 salaries_df = salaries_df[salaries_df['Year'] == 2015]
 salaries_df = salaries_df.head(100)
@@ -20,7 +23,7 @@ for index, salary_row in salaries_df.iterrows():
     # Player Id, Year, Team, LG, Year.G, Year.AB,... Year-1.G, Year-1.AB, etc.
     if len(player_df) > 0:
         stats[player_id] = {'Salary Year': str(salary_year),
-                            'Avg Annual Salary': salary_row['Avg Annual']}
+                            'Annual Salary': salary_row['Avg Annual']}
         for index, year_row in player_df.iterrows():
             play_year = year_row['Year']
             print("Player {}, year {}".format(player_id, play_year))
