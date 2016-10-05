@@ -7,18 +7,17 @@ import re
 import subprocess
 import sys
 
-if not os.path.exists("player_urls.txt"):
+if not os.path.exists(os.path.join("..", "data", "player_urls.txt")):
     print("Requires player_urls.txt. Run extract_player_urls.py first.")
     sys.exit(-1)
 
 dir = os.path.join("..", "data", "cleaned")
 files = listdir(dir)
 
-season = "2015"
 player_urls = []
 players_output_dir = os.path.join("..", "data", "players")
 
-with open("player_urls.txt", "r") as f:
+with open(os.path.join("..", "data", "player_urls.txt"), "r") as f:
     player_urls = [line.strip() for line in f.readlines()]
 
 # Example: http://mlb.mlb.com/team/player.jsp?player_id=453562

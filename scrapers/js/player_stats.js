@@ -12,7 +12,7 @@ function retrievePage(url, statsType) {
     return page.evaluate(function() {
       var stats = [];
       var headers = $("#careerStats .responsive-datatable__pinned table thead tr th");
-      var rows = $("#careerStats table tbody tr");
+      var rows = $("#careerStats .responsive-datatable__pinned table tbody tr");
 
       headers = headers.map(function() {return $.trim(this.textContent);}).get();
 
