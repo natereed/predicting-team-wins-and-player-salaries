@@ -46,6 +46,7 @@ function retrievePage(url) {
   };
 
   function processPage() {
+    page.render("sesaon_stats.png");
     var stats = page.evaluate(function() {
 
       var extractColumnName = function(className) {
@@ -152,7 +153,7 @@ function retrievePage(url) {
                   return $(".stats_table").is(":visible") && $(".stats_table > tbody > tr").length > 50;
               });
           }, function() {
-               setTimeout(processPage, 1000);
+               setTimeout(processPage, 5000);
           });
       }
   });
