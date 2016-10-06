@@ -1,23 +1,42 @@
+import argparse
 import pandas as pd
 import os
+
+parser = argparse.ArgumentParser()
+parser.add_argument("seasons", type=str)
+parser.add_argument("num_prior_years", type=int)
+parser.add_argument("include_current_year", type=bool)
+args = parser.parse_args()
+
+seasons = [int(season) for season in args.seasons.split(",")]
+num_prior_years = args.num_prior_years
 
 # TODO:
 # Re-order generated columns. Sort by year and statistic.
 
 salaries_df = pd.read_csv(os.path.join("..", "data", "db", "Salaries.csv"))
-salaries_df = salaries_df[salaries_df['Year'] == 2015]
+salaries_df = salaries_df[salaries_df['Year'].isin(pd.Series(seasons))]
 salaries_df.sort(columns=['Year', 'Player Id'], ascending=[0, 1])
 performance_df = pd.read_csv(os.path.join("..", "data", "db", "Performance.csv"))
 
 missing_players = []
 
 stats = {}
+print(str(len(salaries_df)) + " salaries.")
 for index, salary_row in salaries_df.iterrows():
     player_id = salary_row['Player Id']  # short name, like 'bcolon'
     salary_year = salary_row['Year']
     print("Player {} in salary year {}".format(player_id, salary_year))
     #print("Player {} in salary year {}".format(player_id, salary_year))
-    player_df = performance_df[(performance_df['Player Id'] == player_id) & (performance_df['Year'] <= salary_year)]
+    subset_ind = (performance_df['Player Id'] == player_id) \
+                 & (performance_df['Year'] >= salary_year - num_prior_years)
+    if args.include_current_year:
+        subset_ind &= (performance_df['Year'] <= salary_year)
+    else:
+        subset_ind &= (performance_df['Year'] < salary_year)
+
+    player_df = performance_df[subset_ind]
+    print(str(len(player_df)) + " entries.")
 
     # Iterate over performance stats for the given player
     # Each row is for a different year. Assemble all years into a single row.
@@ -44,9 +63,9 @@ with open("missing_stats.txt", "w") as missing_stats_out:
     for missing_player in missing_players:
         missing_stats_out.write(missing_player + "\n")
 
-#import json
-#with open("stats.json", "w") as stats_out:
-#    json.dump(stats, stats_out)
+import json
+with open("stats.json", "w") as stats_out:
+    json.dump(stats, stats_out)
 
 #print(stats)
 
