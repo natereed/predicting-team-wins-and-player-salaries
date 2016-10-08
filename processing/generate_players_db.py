@@ -3,20 +3,13 @@ import fnmatch
 import os
 from os import listdir
 import re
+import nameutils
 
 names = set()
 
 def extract_player_id(url):
     m = re.search(r'player_id=(\d+)', url)
     return m.group(1)
-
-def normalize_name(name):
-    m = re.search(r'([\w\s]+),\s+([\w\s]{1})', name)
-    last = m.group(1)
-    first = m.group(2)
-    norm_name = first[0].lower() + last.lower()
-    norm_name = norm_name.replace(' ', '')
-    return norm_name
 
 dir = os.path.join("..", "data", "cleaned")
 files = listdir(dir)
@@ -35,6 +28,7 @@ with open(os.path.join("..", "data", "db", "Players.csv"), "w") as out_file:
                     name = row['Player']
                     out_row['Name'] = name
                     out_row['External Player Id'] = extract_player_id(row['Player URL'])
-                    out_row['Player Id'] = normalize_name(name)
+                    print("Normalizing " + name)
+                    out_row['Player Id'] = nameutils.normalize_last_and_first_initial(name)
                     writer.writerow(out_row)
 

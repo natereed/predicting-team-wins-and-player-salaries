@@ -3,6 +3,7 @@ import glob
 import fnmatch
 import os
 import re
+import json
 
 seasons = [2015]
 
@@ -15,33 +16,37 @@ def extract_player_id(url):
     m = re.search(r'player_id=([0-9]+)', url)
     return m.group(1)
 
-def get_stats_types_for_player(player_url):
-    
-missing = []
+#def get_stats_types_for_player(player_url):
+
+missing_targets = {}
 # Read stats index file
 #files = os.listdir(os.path.join("..", "data", "cleaned"))
 
 player_urls = []
-with open(os.path.join("..", "data", "player_urls.txt"), "r") as player_urls_in:
-    player_urls = player_urls_in.readlines()
-    for player_url in player_urls:
-        player_id = extract_player_id(player_url)
-        print("Looking for " + player_id)
-        try:
-            stats_types = get_stats_types_for_player(player_id)
-            # Look for the stats types for the player, based on which index files this player appeared in
-            # (eg. if fielding-cleaned.2015.csv, then we expect fielding.json to contain data)
+with open(os.path.join("..", "data", "scraping_targets.json"), "r") as scraping_targets_in:
+    scraping_targets = json.load(scraping_targets_in)
+    for player_id in scraping_targets:
+        print("Validating " + player_id)
+        target = scraping_targets[player_id]
+        target['Player URL']
+        external_player_id = target['External Player Id']
+        stats_types = target['Stats Types']
+        missing = []
+        for stats_type in stats_types:
+            if (stats_type == 'hitting'):
+                stats_type = 'batting'
+            # Check players/{external_player_id}/{stats_type}.json
+            path = os.path.join("..", "data", "players", external_player_id, stats_type + ".json")
+            if (not os.path.isfile(path) or 0 == os.path.getsize(path)):
+                print("Empty or missing file for player {}, stats {}".format(external_player_id, stats_type))
+                missing.append(stats_type)
+        if (len(missing) > 0):
+            target['Stats Types'] = missing
+            missing_targets[player_id] = target
 
-            player_files = os.listdir(os.path.join("..", "data", "players", player_id))
-            for player_file in player_files:
-                if fnmatch.fnmatch(player_file, '{}.json)'.format(stats_type)) and os.path.getsize(player_file) == 0:
-                    print("Missing {} for player {}".format(stats_type, player_id))
-                    missing.append(player_id)
-        except:
-            print("No directory for " + player_id)
-            missing.append(player_id)
+import json
+print("{} missing players".format(len(missing_targets.keys())))
+with open("missing_targets.json", "w") as f:
+    json.dump(missing_targets, f)
 
-print("{} missing players".format(len(list(set(missing)))))
-with open("missing.txt", "w") as f:
-    for p in missing:
-        f.write(p + "\n")
+print("Validated {} players".format(len(scraping_targets.keys())))

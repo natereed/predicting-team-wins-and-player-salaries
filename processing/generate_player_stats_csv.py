@@ -48,6 +48,7 @@ def lookup_fieldnames(stats_type, advanced=None):
     return FIELDNAMES[key]
 
 def generate_stats_csv(player_id, stats_type):
+    print(player_id)
     print("Stats type:" + stats_type)
     player_dir = os.path.join(os.path.join("..", "data", "players"), player_id)
     path = os.path.join(player_dir, "{}.json".format(stats_type))
