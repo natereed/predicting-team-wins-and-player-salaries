@@ -2,6 +2,16 @@ import argparse
 import pandas as pd
 import os
 
+# Script generates player-by-player observations, which merges the salary data and aggregates all
+# the performance data for that player, going back the specified number of years.
+# TODO:
+#  -Recalculate all averages. It would be easier to do this before generating the observations. Put it here
+#   or in the generate_performance_db.py script.
+#  -Create new features:
+#   1. Years of experience, ie. number of years of player performance data
+#   2. Number of wins per player (rollup team wins --- this might need to go in the performance data first,
+#      before the team column is removed)
+
 parser = argparse.ArgumentParser()
 parser.add_argument("seasons", type=str)
 parser.add_argument("num_prior_years", type=int)
@@ -11,9 +21,6 @@ args = parser.parse_args()
 
 seasons = [int(season) for season in args.seasons.split(",")]
 num_prior_years = args.num_prior_years
-
-# TODO:
-# Re-order generated columns. Sort by year and statistic.
 
 salaries_df = pd.read_csv(os.path.join("..", "data", "db", "Salaries.csv"))
 salaries_df = salaries_df[salaries_df['Year'].isin(pd.Series(seasons))]
