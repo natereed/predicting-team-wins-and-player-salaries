@@ -5,7 +5,8 @@ import os
 parser = argparse.ArgumentParser()
 parser.add_argument("seasons", type=str)
 parser.add_argument("num_prior_years", type=int)
-parser.add_argument("include_current_year", type=bool)
+parser.add_argument("--include_current_year", dest='include_current_year', action='store_true')
+parser.add_argument("--exclude_current_year", dest='include_current_year', action='store_false')
 args = parser.parse_args()
 
 seasons = [int(season) for season in args.seasons.split(",")]
@@ -28,15 +29,20 @@ for index, salary_row in salaries_df.iterrows():
     salary_year = salary_row['Year']
     print("Player {} in salary year {}".format(player_id, salary_year))
     #print("Player {} in salary year {}".format(player_id, salary_year))
+
+    # Load performance data for player
     subset_ind = (performance_df['Player Id'] == player_id) \
                  & (performance_df['Year'] >= salary_year - num_prior_years)
     if args.include_current_year:
+        print("Including current year")
         subset_ind &= (performance_df['Year'] <= salary_year)
     else:
+        print("Excluding current year!")
         subset_ind &= (performance_df['Year'] < salary_year)
-
     player_df = performance_df[subset_ind]
     print(str(len(player_df)) + " entries.")
+
+    # Replace ind. years with aggregate years, if they exist
 
     # Iterate over performance stats for the given player
     # Each row is for a different year. Assemble all years into a single row.
@@ -49,7 +55,7 @@ for index, salary_row in salaries_df.iterrows():
             print("Stats for player {}, year {}".format(player_id, play_year))
             for column in performance_df.columns[3:].values:
                 year_diff = salary_year - play_year
-                if (year_diff == 0):
+                if year_diff == 0:
                     years_relative = ""
                 else:
                     years_relative = "-{}".format(year_diff)
@@ -57,11 +63,16 @@ for index, salary_row in salaries_df.iterrows():
                 stats[player_id][stat_name] = year_row[column]
     else:
         print("No performance stats found.")
-        missing_players.append(player_id)
+        missing_players.append({'Player Id' : player_id,
+                                'Salary Year' : salary_year,
+                                'Name' : salary_row['Name']})
 
-with open("missing_stats.txt", "w") as missing_stats_out:
+import csv
+with open("missing_performance.csv", "w") as missing_stats_out:
+    writer = csv.DictWriter(missing_stats_out, ['Player Id', 'Salary Year', 'Name'])
+    writer.writeheader()
     for missing_player in missing_players:
-        missing_stats_out.write(missing_player + "\n")
+        writer.writerow(missing_player)
 
 import json
 with open("stats.json", "w") as stats_out:
