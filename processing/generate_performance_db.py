@@ -5,6 +5,18 @@ import functools
 # TODO: Remove unused factor variables LG and Team from each file
 # TODO: Reorder columns in output
 
+def recalculate_batting_averages(df):
+    df['Batting_AVG'] = df['Batting_H'] / df['Batting_AB']
+    df['Batting_SLG'] = df['Batting_TB'] / df['Batting_AB']
+    return df
+
+def recalculate_pitching_averages(df):
+    df['Pitching_ERA'] = 9 * df['Pitching_ER'] / df['Pitching_IP']
+    return df
+
+def calculate_fielding_percentage(df):
+    pass
+
 def drop_columns(df):
     df = df.drop("LG", 1)
     df = df.drop("Team", 1)
@@ -41,6 +53,9 @@ def aggregate(df):
 batting_df = pd.read_csv(os.path.join("..", "data", "db", "batting.csv"))
 batting_df = clean(batting_df, "Batting")
 batting_df = aggregate(batting_df)
+batting_df = recalculate_batting_averages(batting_df)
+#for column in batting_df.columns:
+#    print(column)
 
 batting_adv1_df = pd.read_csv(os.path.join("..", "data", "db", "batting-advanced1.csv"))
 batting_adv1_df = clean(batting_adv1_df, "Advanced_Batting")
@@ -57,6 +72,7 @@ for column in fielding_df.columns:
 pitching_df = pd.read_csv(os.path.join("..", "data", "db", "pitching.csv"))
 pitching_df = clean(pitching_df, "Pitching")
 pitching_df = aggregate(pitching_df)
+pitching_df = recalculate_pitching_averages(pitching_df)
 
 pitching_adv1_df = pd.read_csv(os.path.join("..", "data", "db", "pitching-advanced1.csv"))
 pitching_adv1_df = clean(pitching_adv1_df, "Advanced_Pitching")
