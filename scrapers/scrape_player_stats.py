@@ -24,31 +24,26 @@ def scrape_player_stats(url, stats_type):
         os.makedirs(player_dir)
 
     file = os.path.join(player_dir, "{}.json".format(stats_type))
-    if os.path.exists(file):
+    if os.path.exists(file) and os.path.getsize(file) > 0:
         print("Skipping" + file + ". Already exists.")
         return # Stats already exists
 
-    num_retries = 0
-    max_retries = 3
-
-    while (num_retries <= max_retries):
-        with open(file, "w") as outfile:
-            print("Scraping " + url + " for " + stats_type + "...")
-            subprocess.run(["phantomjs", os.path.join("js", "player_stats.js"), url, stats_type], stdout=outfile)
-        if os.path.getsize(file) > 0:
-            break;
-        num_retries += 1
+    with open(file, "w") as outfile:
+        print("Scraping " + url + " for " + stats_type + "...")
+        subprocess.run(["phantomjs", os.path.join("js", "player_stats.js"), url, stats_type], stdout=outfile)
 
 players_output_dir = os.path.join("..", "data", "players")
 if not os.path.exists(players_output_dir):
     os.makedirs(players_output_dir)
 
 import json
-scraping_targets = json.load(os.path.join("..", "data", "scraping_targets.json"))
-for player_id in scraping_targets.keys():
-    target = scraping_targets[player_id]
-    for stats_type in target['Stats Types']:
-        scrape_player_stats(target['Player URL', stats_type])
+
+with open(os.path.join("..", "data", "scraping_targets.json"), "r") as f:
+    scraping_targets = json.load(f)
+    for player_id in scraping_targets.keys():
+        target = scraping_targets[player_id]
+        for stats_type in target['Stats Types']:
+            scrape_player_stats(target['Player URL'], stats_type)
 
 
 

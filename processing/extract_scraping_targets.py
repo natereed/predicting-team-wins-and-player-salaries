@@ -20,7 +20,11 @@ def player_id_from_name(name):
 def extract_stats_type(filename):
     #print("{}".format(filename))
     m = re.search(r'(\w+)-cleaned.[0-9]{4}.csv', filename)
-    return m.group(1)
+    stats_type = m.group(1)
+    if (stats_type == 'hitting'):
+        return 'batting'
+    else:
+        return stats_type
 
 def extract_external_id(url):
     m = re.search(r'player_id=([0-9]+)', url)

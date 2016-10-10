@@ -5,16 +5,6 @@ import functools
 # TODO: Remove unused factor variables LG and Team from each file
 # TODO: Reorder columns in output
 
-# Deprecated:
-def remove_duplicate_years(df):
-    df['Year'] = df.Year.str.extract("^([0-9]{4})")
-    multiple_teams_df = df[df.Team.str.contains("teams")]
-    for index, row in multiple_teams_df.iterrows():
-        df = df[((df['Year'] != row['Year']) | (df['Player Id'] != row['Player Id']))
-                                | ((df['Year'] == row['Year']) & (df['Player Id'] == row['Player Id'])
-                                   & (df['Team'] == row['Team']))]
-    return df
-
 def drop_columns(df):
     df = df.drop("LG", 1)
     df = df.drop("Team", 1)
@@ -33,10 +23,12 @@ def clean(df, prefix):
     df = df.fillna(0.0)
     # Convert all stats to numeric
     for column in df.columns[5:]:
-        print(column)
+        #print(column)
         df[column] = pd.to_numeric(df[column], errors='coerce')
     df = df.fillna(0.0)
     df = drop_columns(df)
+    #for column in df.columns:
+    #    print(column)
     return df
 
 def aggregate(df):
@@ -56,7 +48,11 @@ batting_adv1_df = aggregate(batting_adv1_df)
 
 fielding_df = pd.read_csv(os.path.join("..", "data", "db", "fielding.csv"))
 fielding_df = clean(fielding_df, "Fielding")
+fielding_pos = fielding_df['Fielding_POS']
 fielding_df = aggregate(fielding_df)
+fielding_df['Fielding_POS'] = fielding_pos
+for column in fielding_df.columns:
+    print(column)
 
 pitching_df = pd.read_csv(os.path.join("..", "data", "db", "pitching.csv"))
 pitching_df = clean(pitching_df, "Pitching")

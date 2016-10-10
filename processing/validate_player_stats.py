@@ -5,7 +5,7 @@ import os
 import re
 import json
 
-seasons = [2015]
+seasons = [2013, 2014, 2015]
 
 def extract_stats_type(filename):
     print("{}".format(filename))
