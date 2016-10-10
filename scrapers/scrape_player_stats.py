@@ -22,9 +22,22 @@ def scrape_player_stats(url, stats_type):
     player_dir = os.path.join(os.path.join("..", "data", "players"), player_id)
     if not os.path.exists(player_dir):
         os.makedirs(player_dir)
-    with open(os.path.join(player_dir, "{}.json".format(stats_type)), "w") as outfile:
-        print("Scraping " + url + " for " + stats_type + "...")
-        subprocess.run(["phantomjs", os.path.join("js", "player_stats.js"), url, stats_type], stdout=outfile)
+
+    file = os.path.join(player_dir, "{}.json".format(stats_type))
+    if os.path.exists(file):
+        print("Skipping" + file + ". Already exists.")
+        return # Stats already exists
+
+    num_retries = 0
+    max_retries = 3
+
+    while (num_retries <= max_retries):
+        with open(file, "w") as outfile:
+            print("Scraping " + url + " for " + stats_type + "...")
+            subprocess.run(["phantomjs", os.path.join("js", "player_stats.js"), url, stats_type], stdout=outfile)
+        if os.path.getsize(file) > 0:
+            break;
+        num_retries += 1
 
 players_output_dir = os.path.join("..", "data", "players")
 if not os.path.exists(players_output_dir):

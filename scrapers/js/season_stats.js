@@ -153,7 +153,7 @@ function retrievePage(url) {
                   return $(".stats_table").is(":visible") && $(".stats_table > tbody > tr").length > 50;
               });
           }, function() {
-               setTimeout(processPage, 5000);
+               setTimeout(processPage, 10000);
           });
       }
   });

@@ -27,7 +27,7 @@ def extract_external_id(url):
     return m.group(1)
 
 # Change this as needed:
-seasons = [2015]
+seasons = [2013, 2014]
 
 salaries_df = pd.read_csv(os.path.join("..", "data", "db", "Salaries.csv"))
 salaries_df = salaries_df[salaries_df['Year'].isin(seasons)]

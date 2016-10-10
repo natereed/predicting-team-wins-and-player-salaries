@@ -14,12 +14,11 @@ def extract_player_id(url):
 dir = os.path.join("..", "data", "cleaned")
 files = listdir(dir)
 
-season = 2015
 with open(os.path.join("..", "data", "db", "Players.csv"), "w") as out_file:
     writer = csv.DictWriter(out_file, ['Player Id', 'External Player Id', 'Name'])
     writer.writeheader()
     for file in files:
-        if fnmatch.fnmatch(file, "*-cleaned.{}.csv".format(season)):
+        if fnmatch.fnmatch(file, "*-cleaned.*.csv"):
             print("Processing " + file)
             with open(os.path.join("..", "data", "cleaned", file), "r") as in_file:
                 reader = csv.DictReader(in_file)
