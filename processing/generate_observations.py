@@ -80,6 +80,24 @@ for index, salary_row in salaries_df.iterrows():
         else:
             stats[player_id]['Batting_Career_AVG'] = 0.0
 
+        stats[player_id]['Fielding_Career_Max_FPCT'] = player_df['Fielding_FPCT'].max()
+        stats[player_id]['Fielding_Career_Min_FPCT'] = player_df['Fielding_FPCT'].min()
+
+        chances = player_df['Fielding_PO'].sum() + player_df['Fielding_A'].sum() + player_df['Fielding_E'].sum()
+        if (chances > 0):
+            stats[player_id]['Fielding_Career_FPCT'] = (player_df['Fielding_PO'].sum() + player_df['Fielding_A'].sum()) / chances
+        else:
+            stats[player_id]['Fielding_Career_FPCT'] = 0 # Should this be NaN? We already replaced missing values with 0
+
+        # Pitching
+        stats[player_id]['Pitching_Career_Max_ERA'] = player_df['Pitching_ERA'].max()
+        stats[player_id]['Pitching_Career_Min_ERA'] = player_df['Pitching_ERA'].min()
+
+        if (player_df['Pitching_IP'].sum() > 0):
+            stats[player_id]['Pitching_Career_ERA'] = 9 * player_df['Pitching_ER'].sum() / player_df['Pitching_IP'].sum()
+        else:
+            stats[player_id]['Pitching_Career_ERA'] = 0 # or Nan?
+
     else:
         print("No performance stats found.")
         missing_players.append({'Player Id' : player_id,

@@ -16,7 +16,7 @@ def recalculate_pitching_averages(df):
 
 def recalculate_fielding_percentage(df):
     # (putouts + assists) / (putouts + assists + errors)
-    df['Fielding_FPCT'] = (df['Fielding_PO'] + df['A']) / (df['Fielding_PO'] + df['A'] + df['E'])
+    df['Fielding_FPCT'] = (df['Fielding_PO'] + df['Fielding_A']) / (df['Fielding_PO'] + df['Fielding_A'] + df['Fielding_E'])
     return df
 
 def drop_columns(df):
