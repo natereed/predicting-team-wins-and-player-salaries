@@ -14,8 +14,10 @@ def recalculate_pitching_averages(df):
     df['Pitching_ERA'] = 9 * df['Pitching_ER'] / df['Pitching_IP']
     return df
 
-def calculate_fielding_percentage(df):
-    pass
+def recalculate_fielding_percentage(df):
+    # (putouts + assists) / (putouts + assists + errors)
+    df['Fielding_FPCT'] = (df['Fielding_PO'] + df['A']) / (df['Fielding_PO'] + df['A'] + df['E'])
+    return df
 
 def drop_columns(df):
     df = df.drop("LG", 1)
@@ -66,6 +68,7 @@ fielding_df = clean(fielding_df, "Fielding")
 fielding_pos = fielding_df['Fielding_POS']
 fielding_df = aggregate(fielding_df)
 fielding_df['Fielding_POS'] = fielding_pos
+fielding_df = recalculate_fielding_percentage(fielding_df)
 for column in fielding_df.columns:
     print(column)
 
