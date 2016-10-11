@@ -19,6 +19,10 @@ def recalculate_fielding_percentage(df):
     df['Fielding_FPCT'] = (df['Fielding_PO'] + df['Fielding_A']) / (df['Fielding_PO'] + df['Fielding_A'] + df['Fielding_E'])
     return df
 
+def calculate_power_speed_number(df):
+    df['Batting_PSN'] = 2 * (df['Batting_HR'] * df['Batting_SB']) / (df['Batting_HR'] + df['Batting_SB'])
+    return df
+
 def drop_columns(df):
     df = df.drop("LG", 1)
     df = df.drop("Team", 1)
@@ -28,14 +32,17 @@ def rename_columns(df, prefix):
     df.columns = list(df.columns[:4]) + [prefix + "_" + column for column in df.columns[4:]]
     # Dropped the first 4 columns?
 
-def clean(df, prefix):
+def clean_fielding(df):
+    return clean(df, "Fielding", 5)
+
+def clean(df, prefix, start_column_index=4):
     print(prefix)
     rename_columns(df, prefix)
     # Clean the year column
     df['Year'] = df['Year'].str.extract('([0-9]{4})(\s+\[\-\])*')[0]
 
     # Convert all stats to numeric (coerce non-numeric to NaN's):
-    for column in df.columns[5:]:
+    for column in df.columns[start_column_index:]:
         df[column] = pd.to_numeric(df[column], errors='coerce')
 
     df = drop_columns(df)
@@ -49,9 +56,13 @@ def aggregate(df):
 # Read in all player stats and write out to a single table
 
 batting_df = pd.read_csv(os.path.join("..", "data", "db", "batting.csv"))
+print("Batting raw has {} rows".format(len(batting_df)))
+
 batting_df = clean(batting_df, "Batting")
 batting_df = aggregate(batting_df)
 batting_df = recalculate_batting_averages(batting_df)
+batting_df = calculate_power_speed_number(batting_df)
+
 #for column in batting_df.columns:
 #    print(column)
 
@@ -60,13 +71,12 @@ batting_adv1_df = clean(batting_adv1_df, "Advanced_Batting")
 batting_adv1_df = aggregate(batting_adv1_df)
 
 fielding_df = pd.read_csv(os.path.join("..", "data", "db", "fielding.csv"))
-fielding_df = clean(fielding_df, "Fielding")
+fielding_df = clean_fielding(fielding_df)
 fielding_pos = fielding_df['Fielding_POS']
 fielding_df = aggregate(fielding_df)
 fielding_df['Fielding_POS'] = fielding_pos
+#fielding_df['Fielding_POS'] = fielding_pos
 fielding_df = recalculate_fielding_percentage(fielding_df)
-for column in fielding_df.columns:
-    print(column)
 
 pitching_df = pd.read_csv(os.path.join("..", "data", "db", "pitching.csv"))
 pitching_df = clean(pitching_df, "Pitching")
@@ -85,15 +95,28 @@ pitching_adv2_df = aggregate(pitching_adv2_df)
 #df = functools.reduce(lambda left, right: pd.merge(left, right, on=["Player Id", "Year"]), dfs)
 
 print("Merging...")
+print("Batting")
+print(len(batting_df))
+print(len(batting_adv1_df))
 batting_df = pd.merge(batting_df, batting_adv1_df, on=['Player Id', 'Year'])
+print(len(batting_df))
+
+print("Pitching")
+print(len(pitching_df))
+print(len(pitching_adv1_df))
+print(len(pitching_adv2_df))
 pitching_df = pd.merge(pitching_df, pitching_adv1_df, on=['Player Id', 'Year'])
 pitching_df = pd.merge(pitching_df, pitching_adv2_df, on=['Player Id', 'Year'])
 df = pd.merge(batting_df, pitching_df, how='outer', on=['Player Id', 'Year'])
 
+print(len(df))
+print("Fielding")
+print(fielding_df)
 df = pd.merge(df,
               fielding_df,
               how='outer',
               on=['Player Id', 'Year'])
+print(len(df))
 
 df.to_csv(os.path.join("..", "data", "db", "Performance.csv"))
 

@@ -30,7 +30,6 @@ performance_df = pd.read_csv(os.path.join("..", "data", "db", "Performance.csv")
 missing_players = []
 
 stats = {}
-print(str(len(salaries_df)) + " salaries.")
 for index, salary_row in salaries_df.iterrows():
     player_id = salary_row['Player Id']  # short name, like 'bcolon'
     salary_year = salary_row['Year']
@@ -40,10 +39,10 @@ for index, salary_row in salaries_df.iterrows():
     # Load performance data for player
     subset_ind = (performance_df['Player Id'] == player_id)
     if args.include_current_year:
-        print("Including current year")
+        #print("Including current year")
         subset_ind &= (performance_df['Year'] <= salary_year)
     else:
-        print("Excluding current year!")
+        #print("Excluding current year!")
         subset_ind &= (performance_df['Year'] < salary_year)
     player_df = performance_df[subset_ind]
     print(str(len(player_df)) + " entries.")
@@ -55,12 +54,13 @@ for index, salary_row in salaries_df.iterrows():
     # Player Id, Year, Team, LG, Year.G, Year.AB,... Year-1.G, Year-1.AB, etc.
     if len(player_df) > 0:
         stats[player_id] = {'Salary Year': str(salary_year),
-                            'Annual Salary': salary_row['Avg Annual']}
+                            'Annual Salary': salary_row['Avg Annual'],
+                            'Contract Years': salary_row['Contract Years']}
 
         # Now, subset to num_prior_years and spit out stats for each year
         for index, year_row in player_df[player_df['Year'] >= salary_year - num_prior_years].iterrows():
             play_year = year_row['Year']
-            print("Stats for player {}, year {}".format(player_id, play_year))
+            #print("Stats for player {}, year {}".format(player_id, play_year))
             for column in performance_df.columns[3:].values:
                 year_diff = salary_year - play_year
                 if year_diff == 0:
@@ -73,21 +73,37 @@ for index, salary_row in salaries_df.iterrows():
         # Now, calcuate aggregate functions by player group (we don't need to group-by since we've
         # already subsetted on player id).
         # Note that these calculations exclude the current year, if the exclude_current_year flag is set
+
+        # Batting Career stats
         stats[player_id]['Batting_Career_Max_AVG'] = player_df['Batting_AVG'].max()
         stats[player_id]['Batting_Career_Min_AVG'] = player_df['Batting_AVG'].min()
         if player_df['Batting_AB'].sum() > 0:
             stats[player_id]['Batting_Career_AVG'] = player_df['Batting_H'].sum() / player_df['Batting_AB'].sum()
         else:
             stats[player_id]['Batting_Career_AVG'] = None
+        stats[player_id]['Batting_Career_G'] = player_df['Batting_G'].sum()
+        stats[player_id]['Batting_Career_RBI'] = player_df['Batting_RBI'].sum()
+        stats[player_id]['Batting_Career_Num_Seasons'] = len(player_df[player_df['Batting_G'] > 0])
 
+        if (player_df['Batting_HR'].sum() + player_df['Batting_SB'].sum()) > 0:
+            stats[player_id]['Batting_Career_PSN'] = 2 * (player_df['Batting_HR'].sum() * player_df['Batting_SB'].sum()) / (player_df['Batting_HR'].sum() + player_df['Batting_SB'].sum())
+        stats[player_id]['Batting_Career_SB'] = player_df['Batting_SB'].sum()
+        stats[player_id]['Batting_Career_HR'] = player_df['Batting_HR'].sum()
+        stats[player_id]['Batting_Career_TB'] = player_df['Batting_TB'].sum()
+
+        # Fielding career stats
         stats[player_id]['Fielding_Career_Max_FPCT'] = player_df['Fielding_FPCT'].max()
         stats[player_id]['Fielding_Career_Min_FPCT'] = player_df['Fielding_FPCT'].min()
 
-        chances = player_df['Fielding_PO'].sum() + player_df['Fielding_A'].sum() + player_df['Fielding_E'].sum()
-        if (chances > 0):
-            stats[player_id]['Fielding_Career_FPCT'] = (player_df['Fielding_PO'].sum() + player_df['Fielding_A'].sum()) / chances
+        if (player_df['Fielding_TC'].sum() > 0):
+            stats[player_id]['Fielding_Career_FPCT'] = (player_df['Fielding_PO'].sum() + player_df['Fielding_A'].sum()) / player_df['Fielding_TC'].sum()
         else:
-            stats[player_id]['Fielding_Career_FPCT'] = None # Should this be NaN? We already replaced missing values with 0
+            stats[player_id]['Fielding_Career_FPCT'] = None
+        stats[player_id]['Fielding_Career_G'] = player_df['Fielding_G'].sum()
+        stats[player_id]['Fielding_Career_Num_Seasons'] = len(player_df[player_df['Fielding_G'] > 0])
+        stats[player_id]['Fielding_Career_A'] = player_df['Fielding_A'].sum()
+        stats[player_id]['Fielding_Career_PO'] = player_df['Fielding_PO'].sum()
+        stats[player_id]['Fielding_Career_E'] = player_df['Fielding_E'].sum()
 
         # Pitching
         stats[player_id]['Pitching_Career_Max_ERA'] = player_df['Pitching_ERA'].max()
@@ -98,8 +114,14 @@ for index, salary_row in salaries_df.iterrows():
         else:
             stats[player_id]['Pitching_Career_ERA'] = None # or Nan?
 
+        stats[player_id]['Pitching_Career_IP'] = player_df['Pitching_IP'].sum()
+        stats[player_id]['Pitching_Career_G'] = player_df['Pitching_G'].sum()
+        stats[player_id]['Pitching_Career_Num_Seasons'] = len(player_df[player_df['Pitching_G'] > 0])
+        stats[player_id]['Pitching_Career_ER'] = player_df['Pitching_ER'].sum()
+
+
     else:
-        print("No performance stats found.")
+        #print("No performance stats found.")
         missing_players.append({'Player Id' : player_id,
                                 'Salary Year' : salary_year,
                                 'Name' : salary_row['Name']})
@@ -111,13 +133,11 @@ with open("missing_performance.csv", "w") as missing_stats_out:
     for missing_player in missing_players:
         writer.writerow(missing_player)
 
-print(stats)
+#print(stats)
 
 import json
 with open("stats.json", "w") as stats_out:
     json.dump(stats, stats_out)
-
-#print(stats)
 
 print("Creating data frame...")
 cols = []
@@ -129,8 +149,10 @@ cols.sort()
 cols.insert(0, 'Player Id')
 cols.remove('Annual Salary')
 cols.remove('Salary Year')
+cols.remove('Contract Years')
 cols.insert(1, 'Salary Year')
 cols.insert(2, 'Annual Salary')
+cols.insert(3, 'Contract Years')
 
 import csv
 with open(os.path.join("..", "data", "db", "Observations.csv"), "w") as obs_out:
@@ -139,8 +161,12 @@ with open(os.path.join("..", "data", "db", "Observations.csv"), "w") as obs_out:
     for player_id in stats.keys():
         d = stats[player_id]
         d['Player Id'] = player_id
+        if d['Batting_Career_G']:
+            print(d['Batting_Career_G'])
         writer.writerow(d)
 
-
+print("{} observations written to Observations.csv".format(len(stats.keys())))
+print(str(len(salaries_df)) + " salaries.")
+print("{} missing players".format(len(missing_players)))
 
 
