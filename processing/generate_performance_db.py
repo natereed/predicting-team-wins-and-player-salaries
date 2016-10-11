@@ -33,16 +33,12 @@ def clean(df, prefix):
     rename_columns(df, prefix)
     # Clean the year column
     df['Year'] = df['Year'].str.extract('([0-9]{4})(\s+\[\-\])*')[0]
-    # Replace missing values
-    df = df.fillna(0.0)
-    # Convert all stats to numeric
+
+    # Convert all stats to numeric (coerce non-numeric to NaN's):
     for column in df.columns[5:]:
-        #print(column)
         df[column] = pd.to_numeric(df[column], errors='coerce')
-    df = df.fillna(0.0)
+
     df = drop_columns(df)
-    #for column in df.columns:
-    #    print(column)
     return df
 
 def aggregate(df):
@@ -99,11 +95,7 @@ df = pd.merge(df,
               how='outer',
               on=['Player Id', 'Year'])
 
-# Replace NaN's introduced by outer join
-df = df.fillna(0.0)
-
 df.to_csv(os.path.join("..", "data", "db", "Performance.csv"))
-#df = pd.read_csv(os.path.join("..", "db", "Performance.csv"))
 
 
 

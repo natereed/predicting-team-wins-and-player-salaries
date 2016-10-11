@@ -78,7 +78,7 @@ for index, salary_row in salaries_df.iterrows():
         if player_df['Batting_AB'].sum() > 0:
             stats[player_id]['Batting_Career_AVG'] = player_df['Batting_H'].sum() / player_df['Batting_AB'].sum()
         else:
-            stats[player_id]['Batting_Career_AVG'] = 0.0
+            stats[player_id]['Batting_Career_AVG'] = None
 
         stats[player_id]['Fielding_Career_Max_FPCT'] = player_df['Fielding_FPCT'].max()
         stats[player_id]['Fielding_Career_Min_FPCT'] = player_df['Fielding_FPCT'].min()
@@ -87,7 +87,7 @@ for index, salary_row in salaries_df.iterrows():
         if (chances > 0):
             stats[player_id]['Fielding_Career_FPCT'] = (player_df['Fielding_PO'].sum() + player_df['Fielding_A'].sum()) / chances
         else:
-            stats[player_id]['Fielding_Career_FPCT'] = 0 # Should this be NaN? We already replaced missing values with 0
+            stats[player_id]['Fielding_Career_FPCT'] = None # Should this be NaN? We already replaced missing values with 0
 
         # Pitching
         stats[player_id]['Pitching_Career_Max_ERA'] = player_df['Pitching_ERA'].max()
@@ -96,7 +96,7 @@ for index, salary_row in salaries_df.iterrows():
         if (player_df['Pitching_IP'].sum() > 0):
             stats[player_id]['Pitching_Career_ERA'] = 9 * player_df['Pitching_ER'].sum() / player_df['Pitching_IP'].sum()
         else:
-            stats[player_id]['Pitching_Career_ERA'] = 0 # or Nan?
+            stats[player_id]['Pitching_Career_ERA'] = None # or Nan?
 
     else:
         print("No performance stats found.")
