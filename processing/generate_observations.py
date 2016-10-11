@@ -38,8 +38,7 @@ for index, salary_row in salaries_df.iterrows():
     #print("Player {} in salary year {}".format(player_id, salary_year))
 
     # Load performance data for player
-    subset_ind = (performance_df['Player Id'] == player_id) \
-                 & (performance_df['Year'] >= salary_year - num_prior_years)
+    subset_ind = (performance_df['Player Id'] == player_id)
     if args.include_current_year:
         print("Including current year")
         subset_ind &= (performance_df['Year'] <= salary_year)
@@ -57,7 +56,9 @@ for index, salary_row in salaries_df.iterrows():
     if len(player_df) > 0:
         stats[player_id] = {'Salary Year': str(salary_year),
                             'Annual Salary': salary_row['Avg Annual']}
-        for index, year_row in player_df.iterrows():
+
+        # Now, subset to num_prior_years and spit out stats for each year
+        for index, year_row in player_df[player_df['Year'] >= salary_year - num_prior_years].iterrows():
             play_year = year_row['Year']
             print("Stats for player {}, year {}".format(player_id, play_year))
             for column in performance_df.columns[3:].values:
@@ -68,6 +69,17 @@ for index, salary_row in salaries_df.iterrows():
                     years_relative = "-{}".format(year_diff)
                 stat_name = "{}.Year{}".format(column, years_relative)
                 stats[player_id][stat_name] = year_row[column]
+
+        # Now, calcuate aggregate functions by player group (we don't need to group-by since we've
+        # already subsetted on player id).
+        # Note that these calculations exclude the current year, if the exclude_current_year flag is set
+        stats[player_id]['Batting_Career_Max_AVG'] = player_df['Batting_AVG'].max()
+        stats[player_id]['Batting_Career_Min_AVG'] = player_df['Batting_AVG'].min()
+        if player_df['Batting_AB'].sum() > 0:
+            stats[player_id]['Batting_Career_AVG'] = player_df['Batting_H'].sum() / player_df['Batting_AB'].sum()
+        else:
+            stats[player_id]['Batting_Career_AVG'] = 0.0
+
     else:
         print("No performance stats found.")
         missing_players.append({'Player Id' : player_id,
@@ -80,6 +92,8 @@ with open("missing_performance.csv", "w") as missing_stats_out:
     writer.writeheader()
     for missing_player in missing_players:
         writer.writerow(missing_player)
+
+print(stats)
 
 import json
 with open("stats.json", "w") as stats_out:
