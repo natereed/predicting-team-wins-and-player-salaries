@@ -26,30 +26,34 @@ def normalize_first_and_last(name):
     #    if suffix:
     #        suffix = suffix.strip()
 
-    last = name.split()[-1]
-    first = name.split()[0]
-    return normalized_name(first, last, suffix)
+    return normalized_name(name, suffix)
 
+# Deprecated: We should no longer need this:
 def normalize_last_and_first_initial(name):
     m = re.search(r'([\w\s]+)([J|S]r\.)*,\s+([\w\s]{1})', name)
     last = m.group(1)
     suffix = m.group(2)
     first = m.group(3)
-    return normalized_name(first, last, suffix)
+    return normalized_name(first + ' ' + last, suffix)
 
-def normalized_name(first, last, suffix=None):
-    norm_name = first[0].lower() + last.lower()
+def normalized_name(name, suffix=None):
+    last = name.split()[-1]
+    first_and_middle_names = name.split()[:-1]
+    initials = ''.join([name[0].lower() for name in first_and_middle_names])
+    norm_name = initials +  last.lower()
     if (suffix):
         norm_name = norm_name + suffix.lower()
     norm_name = norm_name.replace(' ', '')
     norm_name = norm_name.replace('.', '')
+    norm_name = norm_name.replace('\'', '')
+    norm_name = norm_name.replace('`', '')
     return norm_name
 
 name = 'Kevin J. Brown'
 print(name)
 norm_name = normalize_first_and_last(name)
 print("Normalized: " + norm_name)
-assert(norm_name == 'kbrown')
+assert(norm_name == 'kjbrown')
 
 norm_name = normalize_first_and_last('Ken Griffey Jr.')
 print("Normalized: " + norm_name)
@@ -61,7 +65,7 @@ assert(norm_name == 'cwang')
 
 norm_name = normalize_first_and_last('Fautino De Los Santos')
 print("Normalized: " + norm_name)
-assert(norm_name == 'fsantos')
+assert(norm_name == 'fdlsantos')
 
 # Test the last name, first initial names
 name = 'Whitaker, L'
@@ -73,3 +77,18 @@ name = "Young Jr., E"
 norm_name = normalize_last_and_first_initial(name)
 print("Normalized: " + norm_name)
 assert(norm_name == 'eyoungjr')
+
+name = "Darren O`Day "
+norm_name = normalize_first_and_last(name)
+print("Normalizedd: " + norm_name)
+assert(norm_name == 'doday')
+
+name = "Manuel De Los Santos"
+norm_name = normalize_first_and_last(name)
+print("Normalized: " + norm_name)
+assert(norm_name == 'mdlsantos')
+
+name = "Miguel Alfredo Gonzalez"
+norm_name = normalize_first_and_last(name)
+print("Normalized: " + norm_name)
+assert(norm_name == 'magonzalez')
