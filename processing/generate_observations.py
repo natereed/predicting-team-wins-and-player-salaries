@@ -43,6 +43,8 @@ for index, salary_row in salaries_df.iterrows():
     #print("Player {} in salary year {}".format(player_id, salary_year))
 
     # Load performance data for player
+    # TODO: Map salary player name to player id using the first & last, or the full name (incl. middle initial)
+
     subset_ind = (performance_df['Player Id'] == player_id)
     if args.include_current_year:
         #print("Including current year")
@@ -126,6 +128,11 @@ for index, salary_row in salaries_df.iterrows():
         stats['Pitching_Career_G'] = player_df['Pitching_G'].sum()
         stats['Pitching_Career_Num_Seasons'] = len(player_df[player_df['Pitching_G'] > 0])
         stats['Pitching_Career_ER'] = player_df['Pitching_ER'].sum()
+        stats['Pitching_Career_SO'] = player_df['Pitching_SO'].sum()
+        stats['Pitching_Career_SHO'] = player_df['Pitching_SHO'].sum()
+        stats['Pitching_Career_W'] = player_df['Pitching_W'].sum()
+        stats['Pitching_Career_L'] = player_df['Pitching_L'].sum()
+        stats['Pitching_Career_GS'] = player_df['Pitching_GS'].sum()
         observations.append(stats)
     else:
         #print("No performance stats found.")

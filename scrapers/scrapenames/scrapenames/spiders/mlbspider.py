@@ -6,28 +6,36 @@ class MlbSpider(scrapy.Spider):
     name = "mlbspider"
     allowed_domains = ["mlb.com"]
 
-    def __init__(self, player_dir):
-        self.player_dir = player_dir
+    def __init__(self, player_ids_file):
+        self.player_ids_file = player_ids_file
 
     def start_requests(self):
-        player_dirs = os.listdir(self.player_dir)
-        for player_dir in player_dirs:
-            url = 'http://mlb.mlb.com/team/player.jsp?player_id={}'.format(player_dir)
-            print(url)
+        player_ids = []
+        with open(self.player_ids_file, "r") as player_ids_file:
+            for line in player_ids_file.readlines():
+                player_ids.append(line.strip())
+
+        for player_id in player_ids:
+            url = 'http://mlb.mlb.com/team/player.jsp?player_id={}'.format(player_id)
+            #print(url)
             yield scrapy.Request(url=url,
                                  callback=self.parse,
-                                 meta={'player_id' : player_dir})
+                                 meta={'player_id' : player_id})
 
     def parse(self, response):
         vitals = response.css('.player-vitals ul li::text').extract()
         position = vitals[0]
         batting_and_throwing = vitals[1]
         height_and_weight = vitals[2]
-
+        player_numbers = response.css('.player-number::text').extract()
+        if len(player_numbers) > 0:
+            player_number = player_numbers[0]
+        else:
+            player_number = ''
         yield {'player_id' : response.meta['player_id'],
                'name' : response.css('.player-name::text').extract()[0],
                'full-name' : response.css('.full-name::text').extract()[0],
-               'number': response.css('.player-number::text').extract()[0],
+               'number': player_number,
                'position' : vitals[0],
                'batting_and_throwing' : vitals[1],
                'height_and_weight' : vitals[2],

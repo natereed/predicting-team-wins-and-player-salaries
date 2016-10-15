@@ -13,6 +13,7 @@ import re
 from os import listdir
 
 # Function to convert player name to a player id (standardized short name)
+# TODO: Rewrite to use player id from Players.csv
 def player_id_from_name(name):
     #print(name)
     return nameutils.normalize_last_and_first_initial(name)

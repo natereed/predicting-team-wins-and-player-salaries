@@ -20,6 +20,8 @@ FIELDNAMES = {
 # Write out the player id and standardized player short name along with the performance stats
 # as a CSV file.
 
+missing_players = []
+
 def lookup_player(player_id):
     with open(os.path.join("..", "data", "db", "Players.csv")) as players_csv:
         reader = csv.DictReader(players_csv)
@@ -38,7 +40,7 @@ def generate_batting_career_stats_csv(player_dir, player_id, career_data):
         writer = csv.DictWriter(out_file, fieldnames)
         writer.writeheader()
         for row in career_data:
-            row['Player Id'] = player['Player Id']
+            row['Player Id'] = player['Player Id'] # Short player name id - generated from first and last names
             writer.writerow(row)
 
 def lookup_fieldnames(stats_type, advanced=None):
@@ -59,6 +61,10 @@ def generate_stats_csv(player_id, stats_type):
         return
 
     player = lookup_player(player_id)
+    if not player:
+        print("No player info for player id #{} was found".format(player_id))
+        missing_players.append(player_id)
+        return
 
     # Generate career stats
     with open(os.path.join(player_dir, "{}.csv".format(stats_type)), "w") as out_file:
@@ -93,6 +99,8 @@ def generate_stats_csv(player_id, stats_type):
 
 stats_dir = os.path.join("..", "data", "players")
 player_ids = os.listdir(stats_dir)
+
+# Iterate over external player id's (from MLB.com)
 for player_id in player_ids:
     player_dir = os.path.join(stats_dir, player_id)
 
@@ -101,3 +109,7 @@ for player_id in player_ids:
     for stats_type in ['batting', 'pitching', 'fielding']:
         generate_stats_csv(player_id, stats_type)
 
+print("{} missing players".format(len(missing_players)))
+with open("missing_players.txt", "w") as missing_players_out:
+    for missing_player in missing_players:
+        missing_players_out.write(missing_player + "\n")
