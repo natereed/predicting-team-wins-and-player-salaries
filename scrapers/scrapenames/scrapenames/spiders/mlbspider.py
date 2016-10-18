@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import scrapy
 import os
+import re
 
 class MlbSpider(scrapy.Spider):
     name = "mlbspider"
@@ -32,6 +33,13 @@ class MlbSpider(scrapy.Spider):
             player_number = player_numbers[0]
         else:
             player_number = ''
+
+        player_birthdate_and_place = response.css('.player-bio ul li::text')[1].extract()
+        # Grep for a date-like string
+        m = re.search(r'([0-9]{2}/[0-9]{2}/[0-9]{4})', player_birthdate_and_place)
+        if m:
+            birthdate = m.group(1)
+
         yield {'player_id' : response.meta['player_id'],
                'name' : response.css('.player-name::text').extract()[0],
                'full-name' : response.css('.full-name::text').extract()[0],
@@ -39,4 +47,5 @@ class MlbSpider(scrapy.Spider):
                'position' : vitals[0],
                'batting_and_throwing' : vitals[1],
                'height_and_weight' : vitals[2],
+               'birthday' : birthdate
                }

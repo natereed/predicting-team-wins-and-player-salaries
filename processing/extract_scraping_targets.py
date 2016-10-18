@@ -10,13 +10,8 @@ import os
 import pandas as pd
 import re
 
+from db_access import lookup_player, load_players_df
 from os import listdir
-
-# Function to convert player name to a player id (standardized short name)
-# TODO: Rewrite to use player id from Players.csv
-def player_id_from_name(name):
-    #print(name)
-    return nameutils.normalize_last_and_first_initial(name)
 
 def extract_stats_type(filename):
     #print("{}".format(filename))
@@ -36,12 +31,17 @@ seasons = [2013, 2014, 2015]
 
 salaries_df = pd.read_csv(os.path.join("..", "data", "db", "Salaries.csv"))
 salaries_df = salaries_df[salaries_df['Year'].isin(seasons)]
+players_df = load_players_df()
 
 dir = os.path.join("..", "data", "cleaned")
 files = listdir(dir)
 
 scraping_targets = {}
 players_output_dir = os.path.join("..", "data", "players")
+
+def get_name(last_and_first_initial):
+    names = last_and_first_initial.split(',')
+    return "{} {}".format(names[1], names[0])
 
 # Iterate over the 3 files per season (fielding, pitching, batting)
 for season in seasons:
@@ -52,10 +52,18 @@ for season in seasons:
             with open(os.path.join(dir, file), "r") as season_stats:
                 reader = csv.DictReader(season_stats)
                 for row in reader:
-                    player_id = player_id_from_name(row['Player'])
+                    external_player_id = extract_external_id(row['Player URL'])
+                    # Filter out players that are not in Salaries (would be a waste of time to scrape)`
+                    # row['Player'] matches any salaries_df['Name']
+                    print("Looking up player info for {}, {},  {}".format(row['Player'], season, row['Team']))
+                    player = lookup_player(players_df, row['Player'], season, row['Team'])
+                    if player is not None:
+                        player_id = player['Player Id']
+                    else:
+                        print("Missing player info for {}".format(row['Player']))
+                        import sys
+                        sys.exit(-1)
                     if player_id in salaries_df['Player Id'].values:
-                        external_id = extract_external_id(row['Player URL'])
-
                         # Get target if it exists, or create a new one
                         target = scraping_targets.get(player_id)
                         if not target:
@@ -63,7 +71,7 @@ for season in seasons:
                             scraping_targets[player_id] = target
 
                         # Populate with meta-data
-                        target['External Player Id'] = external_id
+                        target['External Player Id'] = external_player_id
                         target['Player URL'] = row['Player URL']
 
                         # Get stats_types for target, if exists. If not, create new one.

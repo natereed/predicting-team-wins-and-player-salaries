@@ -13,12 +13,12 @@ if not os.path.exists(os.path.join("..", "data", "scraping_targets.json")):
     sys.exit(-1)
 
 # Example: http://mlb.mlb.com/team/player.jsp?player_id=453562
-def extract_player_id(url):
+def extract_external_player_id(url):
     m = re.search(r'player_id=(\d+)', url)
     return m.group(1)
 
 def scrape_player_stats(url, stats_type):
-    player_id = extract_player_id(url)
+    player_id = extract_external_player_id(url)
     player_dir = os.path.join(os.path.join("..", "data", "players"), player_id)
     if not os.path.exists(player_dir):
         os.makedirs(player_dir)
