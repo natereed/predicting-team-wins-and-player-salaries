@@ -38,12 +38,12 @@ for season in seasons:
 for index, salary_row in salaries_df.iterrows():
     player_id = salary_row['Player Id']  # short name, like 'bcolon'
     salary_year = salary_row['Year']
+    salary_team = salary_row['Team']
 
     print("Player {} in salary year {}".format(player_id, salary_year))
     #print("Player {} in salary year {}".format(player_id, salary_year))
 
     # Load performance data for player
-    # TODO: Map salary player name to player id using the first & last, or the full name (incl. middle initial)
 
     subset_ind = (performance_df['Player Id'] == player_id)
     if args.include_current_year:
@@ -65,7 +65,8 @@ for index, salary_row in salaries_df.iterrows():
         stats = {'Salary Year': str(salary_year),
                  'Annual Salary': salary_row['Avg Annual'],
                  'Contract Years': salary_row['Contract Years'],
-                 'Player Id' : player_id}
+                 'Player Id' : player_id,
+                 'Salary Team' : salary_team}
 
         # Now, subset to num_prior_years and spit out stats for each year
         for index, year_row in player_df[player_df['Year'] >= salary_year - num_prior_years].iterrows():
@@ -164,9 +165,11 @@ cols.insert(0, 'Player Id')
 cols.remove('Annual Salary')
 cols.remove('Salary Year')
 cols.remove('Contract Years')
+cols.remove('Salary Team')
 cols.insert(1, 'Salary Year')
 cols.insert(2, 'Annual Salary')
 cols.insert(3, 'Contract Years')
+cols.insert(4, 'Salary Team')
 
 import csv
 with open(os.path.join("..", "data", "db", "Observations.csv"), "w") as obs_out:

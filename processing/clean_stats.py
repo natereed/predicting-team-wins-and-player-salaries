@@ -1,3 +1,4 @@
+import fnmatch
 import os
 import re
 
@@ -12,6 +13,7 @@ def clean_contents(contents):
     return contents
 
 def cleaned_filename(filename):
+    print("cleaned_filename() for {}".format(filename))
     match = re.match("([a-z]+)\\.([\\d]{4})\\.csv", filename)
     stat_type = match.group(1)
     year = match.group(2)
@@ -25,11 +27,12 @@ downloads_dir = "../data/downloads"
 downloaded_files = os.listdir(downloads_dir)
 
 for filename in downloaded_files:
-    with open("{}/{}".format(downloads_dir, filename), "r") as f:
-        contents = f.read()
-        contents = clean_contents(contents)
+    if re.match(r'[a-z]+\\.[\\d]{4}\\.csv', filename):
+        with open("{}/{}".format(downloads_dir, filename), "r") as f:
+            contents = f.read()
+            contents = clean_contents(contents)
 
-        with open("{}/{}".format(cleaned_dir, cleaned_filename(filename)), "w") as f:
-            f.write(contents)
+            with open("{}/{}".format(cleaned_dir, cleaned_filename(filename)), "w") as f:
+                f.write(contents)
 
 

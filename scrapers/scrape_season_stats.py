@@ -3,13 +3,14 @@ import os
 import subprocess
 import time
 
-PITCHING_URL = "http://mlb.mlb.com/stats/sortable.jsp#elem=%5Bobject+Object%5D&tab_level=child&click_text=Sortable+Player+pitching&game_type='R'&season={}&season_type=ANY&league_code='MLB'&sectionType=sp&statType=pitching&page=1&ts={}&playerType=ALL&sportCode='mlb'&split=&team_id=&active_sw=&position='1'&page_type=SortablePlayer&sortOrder='desc'&sortColumn=avg&results=&perPage=9999999&timeframe=&last_x_days=&extended=0"
-HITTING_URL = "http://mlb.mlb.com/stats/sortable.jsp#elem=%5Bobject+Object%5D&tab_level=child&click_text=Sortable+Player+hitting&game_type='R'&season={}&season_type=ANY&league_code='MLB'&sectionType=sp&statType=hitting&page=1&ts={}&perPage=9999999&playerType=ALL"
-FIELDING_URL = "http://mlb.mlb.com/stats/sortable.jsp#elem=%5Bobject+Object%5D&tab_level=child&click_text=Sortable+Player+fielding&game_type='R'&season={}&season_type=ANY&league_code='MLB'&sectionType=sp&statType=fielding&page=1&ts={}&perPage=9999999&playerType=ALL"
+PITCHING_URL = "http://mlb.mlb.com/stats/sortable.jsp#elem=%5Bobject+Object%5D&tab_level=child&click_text=Sortable+Player+pitching&game_type='R'&season={}&season_type=ANY&league_code='MLB'&sectionType=sp&statType=pitching&page={}&ts={}&playerType=ALL&sportCode='mlb'&split=&team_id=&active_sw=&position='1'&page_type=SortablePlayer&sortOrder='desc'&sortColumn=avg&results=&perPage={}&timeframe=&last_x_days=&extended=0"
+HITTING_URL = "http://mlb.mlb.com/stats/sortable.jsp#elem=%5Bobject+Object%5D&tab_level=child&click_text=Sortable+Player+hitting&game_type='R'&season={}&season_type=ANY&league_code='MLB'&sectionType=sp&statType=hitting&page={}&ts={}&perPage={}&playerType=ALL"
+FIELDING_URL = "http://mlb.mlb.com/stats/sortable.jsp#elem=%5Bobject+Object%5D&tab_level=child&click_text=Sortable+Player+fielding&game_type='R'&season={}&season_type=ANY&league_code='MLB'&sectionType=sp&statType=fielding&page={}&ts={}&perPage={}&playerType=ALL"
 
-def get_url(year, stats_type):
+def get_url(year, stats_type, page, per_page):
     timestamp = int(time.time() * 1000)
-    return URLS[stats_type].format(year, timestamp)
+
+    return URLS[stats_type].format(year, page, timestamp, per_page)
 
 URLS = {'pitching' : PITCHING_URL,
         'hitting' : HITTING_URL,
@@ -18,7 +19,7 @@ URLS = {'pitching' : PITCHING_URL,
 #years = range(1988,2016)
 #stats_types = ['pitching', 'hitting', 'fielding']
 
-def scrape_season_stats(seasons, stats_types):
+def scrape_season_stats(seasons, stats_types, page, per_page):
     downloads_dir = os.path.join("..", "data", "downloads")
     if not os.path.exists(downloads_dir):
         os.makedirs(downloads_dir)
@@ -27,7 +28,7 @@ def scrape_season_stats(seasons, stats_types):
     for season in seasons:
         for stats_type in stats_types:
             timestamp = int(time.time() * 1000)
-            url = URLS[stats_type].format(season, timestamp)
+            url = URLS[stats_type].format(season, page, timestamp, per_page)
             print("Scraping...")
             print(url)
 
@@ -45,6 +46,9 @@ def scrape_season_stats(seasons, stats_types):
 parser = argparse.ArgumentParser()
 parser.add_argument("seasons", type=str)
 parser.add_argument("stats_types", type=str)
+parser.add_argument("page", type=int, default=1)
+parser.add_argument("per_page", type=int, default=99999)
+
 args = parser.parse_args()
 
 print("Seasons: " + str(args.seasons))
@@ -52,4 +56,4 @@ print("Types: " + str(args.stats_types))
 
 seasons = args.seasons.split(',')
 stats_types = args.stats_types.split(',')
-scrape_season_stats(seasons, stats_types)
+scrape_season_stats(seasons, stats_types, args.page, args.per_page)

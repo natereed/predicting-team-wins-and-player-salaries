@@ -7,7 +7,7 @@ import re
 # The player full names will provide a more accurate lookup method when joining stats with salaries using
 # the players database (which also depends on the names).
 
-seasons = range(2011, 2015)
+seasons = [2011, 2012, 2013, 2014, 2015]
 dir = os.path.join("..", "data", "cleaned")
 files = os.listdir(os.path.join("..", "data", "cleaned"))
 

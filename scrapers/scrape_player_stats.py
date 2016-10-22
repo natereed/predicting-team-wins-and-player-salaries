@@ -21,6 +21,7 @@ def scrape_player_stats(url, stats_type):
     player_id = extract_external_player_id(url)
     player_dir = os.path.join(os.path.join("..", "data", "players"), player_id)
     if not os.path.exists(player_dir):
+        print("Making directory" + player_dir)
         os.makedirs(player_dir)
 
     file = os.path.join(player_dir, "{}.json".format(stats_type))

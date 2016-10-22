@@ -60,15 +60,20 @@ def lookup_player(players_df, player_name, season, team):
     matches_df = lookup_player_by_name(players_df, player_name)
 
     if matches_df is None or len(matches_df) == 0:
-        print("No matches.")
+        print("No matches for name " + player_name)
         return None
+    else:
+        print("Found players matching name " + player_name)
 
     # If only one player is found, return that player, otherwise we will need to filter on additional criteria
     if matches_df is not None and len(matches_df) == 1:
+        print("Found one matching player - returning")
         return matches_df.iloc[0,:]
 
+    print("Found multiple matches: ")
     print(matches_df)
 
+    print("Finding season stats....")
     # Find stats for season
     season_stats_df = pd.read_csv(os.path.join("..", "data", "db", "SeasonStats.csv"))
 
@@ -76,16 +81,18 @@ def lookup_player(players_df, player_name, season, team):
     season_stats_df = season_stats_df[season_stats_df['Year'] == season]
     season_stats_df = season_stats_df[season_stats_df['Team'] == team]
     if season_stats_df is not None:
-        matches_df = pd.merge(matches_df, season_stats_df, on=['External Player Id'])
+        print("Merging matches with season stats")
+        matches_df = pd.merge(matches_df, season_stats_df, on=['Player Id', 'External Player Id'])
     else:
         print("No matches.")
         return None
 
     if len(matches_df) == 0:
+        print("No season stats for player")
         return None
 
     # If more than one match, we just return the first one
-    return season_stats_df.iloc[0, :]
+    return matches_df.iloc[0, :]
 
 #players = load_players()
 #player = find_player_by_name('Paul Henry Konerko')

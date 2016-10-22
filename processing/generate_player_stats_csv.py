@@ -24,9 +24,9 @@ missing_players = []
 
 def lookup_player(player_id):
     with open(os.path.join("..", "data", "db", "Players.csv")) as players_csv:
-        reader = csv.DictReader(players_csv)
+        reader = csv.DictReader(players_csv, quoting=csv.QUOTE_ALL, quotechar='|')
         for row in reader:
-            if (row['External Player Id'] == player_id):
+            if (row['External Player Id'].strip() == player_id):
                 return row
     return None
 

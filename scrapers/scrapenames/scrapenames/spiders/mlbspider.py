@@ -34,9 +34,9 @@ class MlbSpider(scrapy.Spider):
         else:
             player_number = ''
 
-        player_birthdate_and_place = response.css('.player-bio ul li::text')[1].extract()
+        player_bio = response.css('.player-bio ul li::text').extract()
         # Grep for a date-like string
-        m = re.search(r'([0-9]{2}/[0-9]{2}/[0-9]{4})', player_birthdate_and_place)
+        m = re.search(r'([0-9]{1,2}/[0-9]{1,2}/[0-9]{4})', ' '.join(player_bio))
         if m:
             birthdate = m.group(1)
 
