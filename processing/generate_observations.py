@@ -22,9 +22,9 @@ args = parser.parse_args()
 seasons = [int(season) for season in args.seasons.split(",")]
 num_prior_years = args.num_prior_years
 
-salaries_df = pd.read_csv(os.path.join("..", "data", "db", "Salaries.csv"))
-salaries_df = salaries_df[salaries_df['Year'].isin(pd.Series(seasons))]
-salaries_df.sort(columns=['Year', 'Player Id'], ascending=[0, 1])
+salaries_df = pd.read_csv(os.path.join("..", "data", "lahman", "baseballdatabank-master", "core", "Salaries.csv"))
+salaries_df = salaries_df[salaries_df['yearID'].isin(pd.Series(seasons))]
+salaries_df.sort(columns=['yearID', 'playerID'], ascending=[0, 1])
 performance_df = pd.read_csv(os.path.join("..", "data", "db", "Performance.csv"))
 
 missing_players = []
@@ -36,41 +36,40 @@ for season in seasons:
     metastats[season] = 0
 
 for index, salary_row in salaries_df.iterrows():
-    player_id = salary_row['Player Id']  # short name, like 'bcolon'
-    salary_year = salary_row['Year']
-    salary_team = salary_row['Team']
+    player_id = salary_row['playerID']  # short name, like 'bcolon'
+    salary_year = salary_row['yearID']
+    salary_team = salary_row['teamID']
 
     print("Player {} in salary year {}".format(player_id, salary_year))
     #print("Player {} in salary year {}".format(player_id, salary_year))
 
     # Load performance data for player
 
-    subset_ind = (performance_df['Player Id'] == player_id)
+    subset_ind = (performance_df['playerID'] == player_id)
     if args.include_current_year:
         #print("Including current year")
-        subset_ind &= (performance_df['Year'] <= salary_year)
+        subset_ind &= (performance_df['yearID'] <= salary_year)
     else:
         #print("Excluding current year!")
-        subset_ind &= (performance_df['Year'] < salary_year)
+        subset_ind &= (performance_df['yearID'] < salary_year)
     player_df = performance_df[subset_ind]
     print(str(len(player_df)) + " entries.")
 
     # Iterate over performance stats for the given player
     # Each row is for a different year. Assemble all years into a single row.
-    # Player Id, Year, Team, LG, Year.G, Year.AB,... Year-1.G, Year-1.AB, etc.
+    # playerID, Year, Team, LG, Year.G, Year.AB,... Year-1.G, Year-1.AB, etc.
 
     if len(player_df) > 0:
         metastats[salary_year] += 1
         stats = {}
         stats = {'Salary Year': str(salary_year),
-                 'Annual Salary': salary_row['Avg Annual'],
-                 'Contract Years': salary_row['Contract Years'],
+                 'Annual Salary': salary_row['salary'],
                  'Player Id' : player_id,
                  'Salary Team' : salary_team}
 
         # Now, subset to num_prior_years and spit out stats for each year
-        for index, year_row in player_df[player_df['Year'] >= salary_year - num_prior_years].iterrows():
-            play_year = year_row['Year']
+        for index, year_row in player_df[player_df['yearID'] >= salary_year - num_prior_years].iterrows():
+            play_year = year_row['yearID']
             #print("Stats for player {}, year {}".format(player_id, play_year))
             for column in performance_df.columns[3:].values:
                 year_diff = salary_year - play_year
@@ -136,23 +135,7 @@ for index, salary_row in salaries_df.iterrows():
         stats['Pitching_Career_GS'] = player_df['Pitching_GS'].sum()
         observations.append(stats)
     else:
-        #print("No performance stats found.")
-        missing_players.append({'Player Id' : player_id,
-                                'Salary Year' : salary_year,
-                                'Name' : salary_row['Name']})
-
-import csv
-with open("missing_performance.csv", "w") as missing_stats_out:
-    writer = csv.DictWriter(missing_stats_out, ['Player Id', 'Salary Year', 'Name'])
-    writer.writeheader()
-    for missing_player in missing_players:
-        writer.writerow(missing_player)
-
-#print(stats)
-
-import json
-with open("stats.json", "w") as stats_out:
-    json.dump(stats, stats_out)
+        print("No performance stats found.")
 
 print("Creating data frame...")
 cols = []
@@ -164,12 +147,10 @@ cols.sort()
 cols.insert(0, 'Player Id')
 cols.remove('Annual Salary')
 cols.remove('Salary Year')
-cols.remove('Contract Years')
 cols.remove('Salary Team')
 cols.insert(1, 'Salary Year')
 cols.insert(2, 'Annual Salary')
-cols.insert(3, 'Contract Years')
-cols.insert(4, 'Salary Team')
+cols.insert(3, 'Salary Team')
 
 import csv
 with open(os.path.join("..", "data", "db", "Observations.csv"), "w") as obs_out:

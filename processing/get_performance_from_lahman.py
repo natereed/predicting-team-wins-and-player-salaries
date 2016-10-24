@@ -56,9 +56,14 @@ def calculate_total_bases(df):
     df['Batting_TB'] = df['Batting_H'] + 2 * df['Batting_2B'] + 3 * df['Batting_3B'] + 4 * df['Batting_HR']
     return df
 
+def calculate_total_chances(df):
+    df['Fielding_TC'] = df['Fielding_A'] + df['Fielding_PO'] + df['Fielding_E']
+    return df
+
 performance_df = calculate_total_bases(performance_df)
 performance_df = calculate_batting_averages(performance_df)
 performance_df = calculate_fielding_percentage(performance_df)
+performance_df = calculate_total_chances(performance_df)
 performance_df = calculate_innings_pitched(performance_df)
 performance_df = calculate_pitching_averages(performance_df)
 performance_df = calculate_power_speed_number(performance_df)
@@ -70,7 +75,6 @@ cols.remove('yearID')
 cols.insert(0, 'playerID')
 cols.insert(1, 'yearID')
 performance_df.columns = cols
-performance_df.rename(columns={'yearID': 'Year', 'playerID': 'Player Id'}, inplace=True)
 print(performance_df.columns)
-performance_df.to_csv("Performance.csv")
+performance_df.to_csv(os.path.join("..", "data", "db", "Performance.csv"))
 
