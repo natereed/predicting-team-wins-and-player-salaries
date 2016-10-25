@@ -1,6 +1,42 @@
 import os
 import pandas as pd
 
+def data_frame_from_player_team_year_position_info(d):
+    rows = []
+    for player_id in d.keys():
+        for year in d[player_id].keys():
+            year_data = d[player_id][year]
+            row = {'playerID': player_id, 'yearID': year}
+            if year_data.get('teams'):
+                teams = year_data['teams']
+                for i, team in enumerate(teams):
+                    row['teamID ' + str(i + 1)] = team
+                row['Num Teams'] = len(teams)
+            if year_data.get('positions'):
+                positions = year_data['positions']
+                for i, position in enumerate(positions):
+                    row['Fielding_POS.' + str(i + 1)] = position
+                row['Num Positions'] = len(positions)
+            rows.append(row)
+
+    return pd.DataFrame(rows)
+
+def update_player_team_year_position_info(d, player_id, year, teams, positions=None):
+    info = d.get(player_id)
+    if not info:
+        info = {}
+        d[player_id] = info
+
+    if not info.get(year):
+        year_info = {}
+        info[year] = year_info
+    year_info = info[year]
+    year_info['teams'] = teams
+
+    # Positions can be optional. Don't overwrite.
+    if positions:
+        year_info['positions'] = positions
+
 batting_df = pd.read_csv(os.path.join("..", "data", "lahman", "baseballdatabank-master", "core", "Batting.csv"))
 pitching_df = pd.read_csv(os.path.join("..", "data", "lahman", "baseballdatabank-master", "core", "Pitching.csv"))
 fielding_df = pd.read_csv(os.path.join("..", "data", "lahman", "baseballdatabank-master", "core", "Fielding.csv"))
@@ -24,9 +60,17 @@ batting_df = batting_grouped.reset_index()
 pitching_grouped = pitching_df.groupby(['playerID', 'yearID']).sum()
 pitching_df = pitching_grouped.reset_index()
 
-fielding_grouped = fielding_df.groupby(['playerID', 'yearID']).sum()
-fielding_df = fielding_grouped.reset_index()
+player_team_year_position_info = {}
+fielding_grouped = fielding_df.groupby(['playerID', 'yearID'])
+for name, group in fielding_grouped:
+    player_id = name[0]
+    year = name[1]
+    teams = set(list(group['teamID'].values))
+    positions = set(list(group['Fielding_POS'].values))
+    update_player_team_year_position_info(player_team_year_position_info, player_id, year, teams, positions)
 
+fielding_grouped = fielding_grouped.sum()
+fielding_df = fielding_grouped.reset_index()
 performance_df = pd.merge(batting_df, pitching_df, on=['playerID', 'yearID'], how='outer')
 performance_df = pd.merge(performance_df, fielding_df, on=['playerID', 'yearID'], how='outer')
 
@@ -76,5 +120,8 @@ cols.insert(0, 'playerID')
 cols.insert(1, 'yearID')
 performance_df.columns = cols
 print(performance_df.columns)
+
+team_and_position_info_df = data_frame_from_player_team_year_position_info(player_team_year_position_info)
+performance_df = pd.merge(performance_df, team_and_position_info_df, on=['playerID', 'yearID'])
 performance_df.to_csv(os.path.join("..", "data", "db", "Performance.csv"))
 
