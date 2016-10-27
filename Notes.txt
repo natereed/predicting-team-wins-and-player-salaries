@@ -1,0 +1,24 @@
+Initial Salaries model
+-------------
+
+The initial model was a linear regression model that was trained on 5 years of playing data and salaries, using data that was scraped from MLB.com and USAToday.com.
+
+R^2 was 0.55. Feature selection using RFE, ridge regression (R^2=.56) and decision tree regression (acccuracy=0.32) were tried, with no significant improvement.
+
+I tried converting this to a classification problem, by binning player salaries into 4 bins. KNN and SVC (Linear, C=1.0)
+were trained and tested, with KNN performing slightly better (.63 vs. .59).
+
+Expanded Data
+-------------
+In order to improve the accuracy, I decided to bring in more data by using the Lahman database. I repeated the training
+and testing using 5 years of player salaries -- from 2011 through 2015.
+
+There was a slight change in accuracy: for the regression model R^2 = 0.57, KNN accuracy score of 0.63, and SVC score of 0.65.
+
+Next, the model was trained on data going back to 1985, the first year that salaries were available.
+
+
+
+
+
+

@@ -13,20 +13,32 @@ import os
 #      before the team column is removed)
 
 parser = argparse.ArgumentParser()
-parser.add_argument("seasons", type=str)
+parser.add_argument("start_season", type=str)
 parser.add_argument("num_prior_years", type=int)
 parser.add_argument("--include_current_year", dest='include_current_year', action='store_true')
 parser.add_argument("--exclude_current_year", dest='include_current_year', action='store_false')
 args = parser.parse_args()
 
-seasons = [int(season) for season in args.seasons.split(",")]
+seasons = list(range(int(args.start_season), 2016))
 num_prior_years = args.num_prior_years
 
+allstar_df = pd.read_csv(os.path.join("..", "data", "lahman", "baseballdatabank-master", "core", "AllstarFull.csv"))
 salaries_df = pd.read_csv(os.path.join("..", "data", "lahman", "baseballdatabank-master", "core", "Salaries.csv"))
 salaries_df = salaries_df[salaries_df['yearID'].isin(pd.Series(seasons))]
 salaries_df.sort(columns=['yearID', 'playerID'], ascending=[0, 1])
+
+batting_post_season_df = pd.read_csv(os.path.join("..", "data", "lahman", "baseballdatabank-master", "core", "BattingPost.csv"))
+pitching_post_season_df = pd.read_csv(os.path.join("..", "data", "lahman", "baseballdatabank-master", "core", "PitchingPost.csv"))
+fielding_post_season_df = pd.read_csv(os.path.join("..", "data", "lahman", "baseballdatabank-master", "core", "FieldingPost.csv"))
+performance_post_season_df = pd.merge(batting_post_season_df,
+                                      pd.merge(pitching_post_season_df,
+                                               fielding_post_season_df,
+                                               on=['playerID','yearID','round','teamID']),
+                                      on=['playerID', 'yearID', 'round', 'teamID'])
 performance_df = pd.read_csv(os.path.join("..", "data", "db", "Performance.csv"))
 
+# Rename columns
+performance_df.rename(columns={'Player Id': 'playerID', 'Year' : 'yearID'}, inplace=True)
 missing_players = []
 
 observations = []
@@ -44,7 +56,6 @@ for index, salary_row in salaries_df.iterrows():
     #print("Player {} in salary year {}".format(player_id, salary_year))
 
     # Load performance data for player
-
     subset_ind = (performance_df['playerID'] == player_id)
     if args.include_current_year:
         #print("Including current year")
@@ -55,18 +66,17 @@ for index, salary_row in salaries_df.iterrows():
     player_df = performance_df[subset_ind]
     print(str(len(player_df)) + " entries.")
 
+    metastats[salary_year] += 1
+    stats = {}
+    stats = {'Salary Year': str(salary_year),
+             'Annual Salary': salary_row['salary'],
+             'Player Id': player_id,
+             'Salary Team': salary_team}
+
     # Iterate over performance stats for the given player
     # Each row is for a different year. Assemble all years into a single row.
     # playerID, Year, Team, LG, Year.G, Year.AB,... Year-1.G, Year-1.AB, etc.
-
     if len(player_df) > 0:
-        metastats[salary_year] += 1
-        stats = {}
-        stats = {'Salary Year': str(salary_year),
-                 'Annual Salary': salary_row['salary'],
-                 'Player Id' : player_id,
-                 'Salary Team' : salary_team}
-
         # Now, subset to num_prior_years and spit out stats for each year
         for index, year_row in player_df[player_df['yearID'] >= salary_year - num_prior_years].iterrows():
             play_year = year_row['yearID']
@@ -100,6 +110,23 @@ for index, salary_row in salaries_df.iterrows():
         stats['Batting_Career_SB'] = player_df['Batting_SB'].sum()
         stats['Batting_Career_HR'] = player_df['Batting_HR'].sum()
         stats['Batting_Career_TB'] = player_df['Batting_TB'].sum()
+        stats['Batting_Career_R'] = player_df['Batting_R'].sum()
+        stats['Batting_Career_H'] = player_df['Batting_H'].sum()
+        #if player_df['Batting_H'].sum().isnull():
+        stats['Batting_Career_2B'] = player_df['Batting_2B'].sum()
+        stats['Batting_Career_3B'] = player_df['Batting_3B'].sum()
+        if player_df['Batting_AB'].sum() > 0:
+            stats['Batting_Career_SLG'] = player_df['Batting_TB'].sum() / player_df['Batting_AB'].sum()
+
+        # OBP
+        # On Base Percentage (aka OBP, On Base Average, OBA) is a measure of how often a batter reaches base.
+        # It is approximately equal to Times on Base/Plate appearances.
+        # The full formula is OBP = (Hits + Walks + Hit by Pitch) / (At Bats + Walks + Hit by Pitch + Sacrifice Flies).
+
+        plate_appearances = player_df['Batting_AB'].sum() + player_df['Batting_BB'].sum() + player_df['Batting_HBP'].sum() + player_df['Batting_SF'].sum()
+        if plate_appearances > 0:
+            times_on_base = player_df['Batting_BB'].sum() + player_df['Batting_H'].sum() + player_df['Batting_HBP'].sum()
+            stats['Batting_Career_OBP'] = times_on_base / plate_appearances
 
         # Fielding career stats
         stats['Fielding_Career_Max_FPCT'] = player_df['Fielding_FPCT'].max()
@@ -137,6 +164,22 @@ for index, salary_row in salaries_df.iterrows():
     else:
         print("No performance stats found.")
 
+    # All star appearances
+    subset_ind = (allstar_df['playerID'] == player_id)
+    if args.include_current_year:
+        subset_ind &= (allstar_df['yearID'] <= salary_year)
+    else:
+        subset_ind &= (allstar_df['yearID'] < salary_year)
+    stats['Num_All_Star_Appearances'] = len(allstar_df[subset_ind].index)
+
+    # Post season
+    subset_ind = (performance_post_season_df['playerID'] == player_id)
+    if args.include_current_year:
+        subset_ind &= (performance_post_season_df['yearID'] <= salary_year)
+    else:
+        subset_ind &= (performance_post_season_df['yearID'] < salary_year)
+    stats['Num_Post_Season_Appearances'] = len(performance_post_season_df[subset_ind].index)
+
 print("Creating data frame...")
 cols = []
 
@@ -152,13 +195,17 @@ cols.insert(1, 'Salary Year')
 cols.insert(2, 'Annual Salary')
 cols.insert(3, 'Salary Team')
 
+num_missing_batting_hits = 0
 import csv
 with open(os.path.join("..", "data", "db", "Observations.csv"), "w") as obs_out:
     writer = csv.DictWriter(obs_out, cols)
     writer.writeheader()
     for obs in observations:
+        if (obs.get('Batting_Career_H') is None):
+            num_missing_batting_hits += 1
         writer.writerow(obs)
 
+print("Num missing batting hits: {}".format(num_missing_batting_hits))
 print("{} observations written to Observations.csv".format(len(observations)))
 print(str(len(salaries_df)) + " salaries.")
 print("{} missing players".format(len(missing_players)))

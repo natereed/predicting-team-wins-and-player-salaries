@@ -41,6 +41,10 @@ batting_df = pd.read_csv(os.path.join("..", "data", "lahman", "baseballdatabank-
 pitching_df = pd.read_csv(os.path.join("..", "data", "lahman", "baseballdatabank-master", "core", "Pitching.csv"))
 fielding_df = pd.read_csv(os.path.join("..", "data", "lahman", "baseballdatabank-master", "core", "Fielding.csv"))
 
+print("# fielding: {}".format(len(fielding_df.index)))
+print("# pitching: {}".format(len(pitching_df.index)))
+print("# Non null ERA in pitching: {}".format(len(pitching_df[~pitching_df['ERA'].isnull()])))
+
 # Rename stats
 batting_df.columns = list(batting_df.columns[:5]) + ["Batting_" + column for column in batting_df.columns[5:]]
 print(batting_df.columns)
@@ -71,17 +75,23 @@ for name, group in fielding_grouped:
 
 fielding_grouped = fielding_grouped.sum()
 fielding_df = fielding_grouped.reset_index()
+
+print("# batting: {}".format(len(batting_df.index)))
+
+print("Merging pitching, batting and fielding...")
 performance_df = pd.merge(batting_df, pitching_df, on=['playerID', 'yearID'], how='outer')
 performance_df = pd.merge(performance_df, fielding_df, on=['playerID', 'yearID'], how='outer')
+print("# rows of performance: {}".format(len(performance_df.index)))
+print("# Non null ERA rows: {}".format(len(performance_df[~performance_df['Pitching_ERA'].isnull()].index)))
 
 def calculate_batting_averages(df):
     df['Batting_AVG'] = df['Batting_H'] / df['Batting_AB']
     df['Batting_SLG'] = df['Batting_TB'] / df['Batting_AB']
     return df
 
-def calculate_pitching_averages(df):
-    df['Pitching_ERA'] = 9 * df['Pitching_ER'] / df['Pitching_IP']
-    return df
+#def calculate_pitching_averages(df):
+#    df['Pitching_ERA'] = 9 * df['Pitching_ER'] / df['Pitching_IP']
+#    return df
 
 def calculate_fielding_percentage(df):
     # (putouts + assists) / (putouts + assists + errors)
@@ -109,7 +119,7 @@ performance_df = calculate_batting_averages(performance_df)
 performance_df = calculate_fielding_percentage(performance_df)
 performance_df = calculate_total_chances(performance_df)
 performance_df = calculate_innings_pitched(performance_df)
-performance_df = calculate_pitching_averages(performance_df)
+#performance_df = calculate_pitching_averages(performance_df)
 performance_df = calculate_power_speed_number(performance_df)
 
 cols = list(performance_df.columns.values)
@@ -118,10 +128,19 @@ cols.remove('playerID')
 cols.remove('yearID')
 cols.insert(0, 'playerID')
 cols.insert(1, 'yearID')
-performance_df.columns = cols
+performance_df = pd.DataFrame(performance_df, columns=cols)
 print(performance_df.columns)
 
 team_and_position_info_df = data_frame_from_player_team_year_position_info(player_team_year_position_info)
-performance_df = pd.merge(performance_df, team_and_position_info_df, on=['playerID', 'yearID'])
+print("Merging team and position info...")
+print(team_and_position_info_df.columns)
+team_and_position_info_df.to_csv(os.path.join("..", "data", "db", "TeamsAndPositions.csv"))
+
+print("Skipping merge, for now.")
+performance_df = pd.merge(performance_df, team_and_position_info_df, on=['playerID', 'yearID'], how="left")
+
+print("# rows in performance: {}".format(len(performance_df.index)))
+print("# rows with non null ERA: {}".format(len(performance_df[~performance_df['Pitching_ERA'].isnull()].index)))
+print(performance_df.columns)
 performance_df.to_csv(os.path.join("..", "data", "db", "Performance.csv"))
 
