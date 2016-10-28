@@ -15,7 +15,7 @@ processing/Readme.md). The cleaned and normalized observations are written out t
 
 * Regression with statsmodels.ipynb: This uses the statsmodels package to create regression models for team wins and player salaries. Shown
 in the notebook are the final models, after iteratively testing different subsets of predictor variables. Variables with low statistical
-significance were eliminated.
+significance were eliminated. Depends on ModelInput.csv.
 
 * Explore Observations.ipynb - Various analysis of the inputs to the model. Correlations and plots of variables vs. adjusted salaries.
 
