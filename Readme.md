@@ -15,7 +15,7 @@ processing/Readme.md). The cleaned and normalized observations are written out t
 
 * Regression with statsmodels.ipynb: This uses the statsmodels package to create regression models for team wins and player salaries. Shown
 in the notebook are the final models, after iteratively testing different subsets of predictor variables. Variables with low statistical
-significance were eliminated.
+significance were eliminated. Depends on ModelInput.csv.
 
 * Explore Observations.ipynb - Various analysis of the inputs to the model. Correlations and plots of variables vs. adjusted salaries.
 
@@ -25,9 +25,8 @@ significance were eliminated.
 
 * LogLinearRegression Model.ipynb: This notebook contains some experimental code for my own implementation of a log(y) regression. The purpose
 was to validate the predictions returned by scikit-learn's LinearRegression on log(y). LogLinearRegression implements predictions which adjust 
-for the variance as described here: http://davegiles.blogspot.com/2013/08/forecasting-from-log-linear-regressions.html. The predictions returned by
-LogLinearRegression.predict(X) and exp(LinearRegression.predict(X)) were close enough that I decided to disregard the bias in LinearRegression's estimates
-of log(y).
+for the variance as described here: http://davegiles.blogspot.com/2013/08/forecasting-from-log-linear-regressions.html. The estimates for
+LogLinearRegression.predict(X) and exp(LinearRegression.predict(X)) were close enough that I decided to disregard the bias in the latter.
 
 
 

@@ -10,17 +10,17 @@ Season stats, including player rankings, are obtained from MLB.com. This data al
 where complete statistics for every season played by this player are available.
 
 Scripts:
-scrapers/scrape_season_stats.py: Takes seasons, stats types and optional page num
-scrapers/js/season_stats.js
+* scrapers/scrape_season_stats.py: Takes seasons, stats types and optional page num
+* scrapers/js/season_stats.js
 
 ## Player Statistics
 
 Once season stats are obtained, url's are extracted from the data and used to drive a player scraping process.
 
 Scripts:
-processing/extract_scraping_targets.json
-scrapers/scrape_player_stats.py
-scrapers/js/player_stats.js
+* processing/extract_scraping_targets.json
+* scrapers/scrape_player_stats.py
+* scrapers/js/player_stats.js
 
 ## Player bio's
 
