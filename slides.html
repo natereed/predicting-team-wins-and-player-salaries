@@ -26,18 +26,126 @@ class: center, middle
 
 ---
 
-# Agenda
+# Problem
 
-1. Introduction
-2.
-3. ...
+* Could we predict free agent salaries?
+* Hypothesis: Player salaries are determined by on-field performance
 
 ---
 
-# Introduction
+# Approach
 
-* What factors drive player compensation?
+* Assemble prior year(s) playing data and salaries (2011-2015) into Observations.csv
+* Add features for career playing stats (Batting averages, earned runs, innings pitched, etc)
+* Use regression with 5-Fold Cross-Validation
+* Eliminate features (regularization, RFE, manual)
 
+---
+
+# Exploratory Analysis
+
+* Understand distribution of salaries
+* Explored relationships between various stats and salaries
+* df.corr() and seaborn scatterplots
+
+---
+
+# Exploratory Analysis: Salary Distribution
+
+<img src="images/salary distribution.png">
+
+---
+
+# Exploratory Analysis: Salaries by Position
+
+<img src="images/Salaries by Position.png">
+
+---
+
+# Exploratory Analysis: Salaries vs. Playing Statistics
+
+<table>
+  <tr>
+    <td><img width="300" src="images/Salary vs RBI.png"></td>
+    <td><img width="300" src="images/Salary vs IP.png"></td>
+  </tr>
+  <tr>
+    <td><img width="300" src="images/Salary vs FPCT.png"></td>
+    <td><img width="300" src="images/Salary vs BG.png"></td>
+  </tr>
+</table>
+
+---
+
+# Feature Selection
+
+* Automated techniques: Ridge, LASSO, ElasticNet, RFE
+* Manual (statsmodels): Eliminate variables with high p-values
+
+Simplified OLS model:
+
+    Adjusted Salary = 0.15 + 3.29 * Batting_Career_TB - 0.32 * Pitching_Career_IP 
+      + 6.3 * Pitching_Career_SO + 3.22 * Num_All_Star_Appearances - 0.34 * NO_POSITION 
+      + 0.2 * FIRST_BASE + 0.4 * SECOND_BASE
+
+---
+
+# Comparison 
+
+<table>
+  <tr><th>Approach</th><th>Accuracy (Avg. R^2)</th><th>Num Features</th></tr>
+  <tr><td>Linear Regression</td><td>0.65 +/- 0.08</td><td>38</td></tr>
+  <tr><td>Decision Tree Regression</td><td>0.61 +/- 0.12</td><td>38</td></tr>
+  <tr><td>Ridge Regression</td><td>0.62</td><td>38</td></tr>
+  <tr><td>LASSO</td><td>0.62</td><td>25</td></tr>
+  <tr><td>ElasticNet</td><td>0.62 +- 0.19</td><td>28</td></tr>
+  <tr><td>Linear Regression (RFE)</td><td>0.64 +- .09</td><td>19</td></tr>
+  <tr><td>Manual</td><td>0.62 +/- 0.15</td><td>7</td></tr>
+</table>
+
+
+
+---
+
+# Most Important Drivers of Compensation
+
+* TB (Total Bases): Number of bases by hits
+* SO (Strikeouts): Number of times pitcher struck out opposing batter
+* Number of All-Star Appearances
+* Position played
+
+---
+
+# Team Wins
+
+Linear regression with team statistics as predictors and winning percentage as the response 
+variable:
+
+    WPCT = 0.45 + 0.79 * R - 0.36 * AB - 0.02 * THIRD_BASE_HITS 
+      - 0.05 * HR - 0.04 * BB - 0.04 * SB - 0.01 * SF - 0.63 * RA 
+      + 0.36 * ER - 0.32 * ERA + 0.07 * CG + 0.03 * SHO + 0.11 * SV 
+      + 0.06 * E + 0.18 * FP + 0.01 * BPF - 0.01 * PPF
+
+R^2 = 0.9
+
+---
+
+# Recommendations:
+
+* Model could be used to obtain "ballpark" estimate of salary (not very accurate)
+* Runs drive wins, but base hits is only one way to get on base
+* Some skills may be overvalued (eg. hitting)
+* Use On-Base Percentage (OBP) instead of TB: Includes walks, hit by pitcher
+
+---
+
+# References
+
+* _Moneyball, Michael Lewis 2003_
+* Baseball-Reference.com
+* MLB.com: Complete player statistics 
+* Lahman Database (SeanLahman.com)
+* USA Today: Salaries going back to 1985
 
     </textarea>
     <script src="https://gnab.github.io/remark/downloads/remark-latest.min.js">
